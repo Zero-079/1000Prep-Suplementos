@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { DM_Sans, Playfair_Display } from "next/font/google"
 import "./globals.css"
 import { AuthProvider } from "@/features/auth/context/AuthContext"
+import { SupplementCartProvider } from "@/features/supplements/context/supplements-cart-context"
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -29,7 +30,9 @@ export default function RootLayout({
     <html lang="es" suppressHydrationWarning data-scroll-behavior="smooth">
       <body className={`${dmSans.variable} ${playfairDisplay.variable} font-sans antialiased`}>
         <AuthProvider>
-          {children}
+          <SupplementCartProvider>
+            {children}
+          </SupplementCartProvider>
         </AuthProvider>
       </body>
     </html>

@@ -7,20 +7,11 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import type { Supplement } from "@/features/supplements/types/supplement"
 import { useSupplementCart } from "@/features/supplements/context/supplements-cart-context"
+import { formatCOP } from "@/lib/utils"
 
 interface SupplementCardProps {
   supplement: Supplement
   onOpenDetail: (supplement: Supplement) => void
-}
-
-function formatCOP(value: string): string {
-  const num = parseInt(value, 10)
-  if (isNaN(num)) return value
-  return new Intl.NumberFormat("es-CO", {
-    style: "currency",
-    currency: "COP",
-    minimumFractionDigits: 0,
-  }).format(num)
 }
 
 const CATEGORY_LABELS: Record<string, string> = {

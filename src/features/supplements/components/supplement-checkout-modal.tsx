@@ -18,7 +18,7 @@ import { supplementOrderService } from "@/features/supplements/services/suppleme
 import { paymentService } from "@/features/supplements/services/payment.service"
 import { useAuthContext } from "@/features/auth/context/AuthContext"
 import { fetchAPI } from "@/config/api"
-import { cn } from "@/lib/utils"
+import { cn, formatCOP } from "@/lib/utils"
 
 const CART_STORAGE_KEY = "supplement_cart_pending"
 
@@ -28,10 +28,6 @@ interface SupplementCheckoutModalProps {
 }
 
 type Step = "login-required" | "form" | "payment" | "success" | "cancelled"
-
-function formatCOP(value: number): string {
-  return new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(value)
-}
 
 function getTodayString(): string {
   return new Date().toISOString().split("T")[0]

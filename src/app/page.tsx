@@ -4,7 +4,6 @@
 import { useState } from "react"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
-import { SupplementCartProvider } from "@/features/supplements/context/supplements-cart-context"
 import { SupplementsHero } from "@/features/supplements/components/supplements-hero"
 import { SupplementsFilter } from "@/features/supplements/components/supplements-filter"
 import { SupplementDetailModal } from "@/features/supplements/components/supplement-detail-modal"
@@ -57,9 +56,5 @@ function SupplementsContent() {
 }
 
 export default function Home() {
-  return (
-    <SupplementCartProvider>
-      <SupplementsContent />
-    </SupplementCartProvider>
-  )
+  return <SupplementsContent />
 }

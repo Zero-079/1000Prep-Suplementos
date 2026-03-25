@@ -16,21 +16,12 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import type { Supplement } from "@/features/supplements/types/supplement"
 import { useSupplementCart } from "@/features/supplements/context/supplements-cart-context"
+import { formatCOP } from "@/lib/utils"
 
 interface SupplementDetailModalProps {
   supplement: Supplement | null
   open: boolean
   onOpenChange: (open: boolean) => void
-}
-
-function formatCOP(value: string): string {
-  const num = parseInt(value, 10)
-  if (isNaN(num)) return value
-  return new Intl.NumberFormat("es-CO", {
-    style: "currency",
-    currency: "COP",
-    minimumFractionDigits: 0,
-  }).format(num)
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
