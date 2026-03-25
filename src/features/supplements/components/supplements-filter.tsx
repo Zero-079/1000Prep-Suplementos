@@ -20,6 +20,7 @@ const FILTER_OPTIONS: FilterOption[] = [
   { label: "Pre-entreno",  value: "PRE_WORKOUT" },
   { label: "Quemadores de grasa", value: "FAT_BURNER" },
   { label: "Aminoácidos",  value: "AMINO_ACIDS" },
+  { label: "Otros",        value: "OTHER" },
 ]
 
 interface SupplementsFilterProps {

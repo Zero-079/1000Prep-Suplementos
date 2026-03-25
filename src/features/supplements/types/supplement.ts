@@ -8,6 +8,7 @@ export type SupplementCategory =
   | "PRE_WORKOUT"
   | "FAT_BURNER"
   | "AMINO_ACIDS"
+  | "OTHER"
 
 export type SupplementCategoryFilter = SupplementCategory
 

@@ -21,6 +21,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   PRE_WORKOUT: "Pre-entreno",
   FAT_BURNER: "Quemadores de grasa",
   AMINO_ACIDS: "Aminoácidos",
+  OTHER: "Otros",
 }
 
 export function SupplementCard({ supplement, onOpenDetail }: SupplementCardProps) {

@@ -25,12 +25,13 @@ interface SupplementDetailModalProps {
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
-  PROTEINS: "Proteínas",
+  PROTEIN: "Proteínas",
   VITAMINS: "Vitaminas",
   CREATINE: "Creatina",
   PRE_WORKOUT: "Pre-entreno",
-  RECOVERY: "Recuperación",
+  FAT_BURNER: "Quemadores de grasa",
   AMINO_ACIDS: "Aminoácidos",
+  OTHER: "Otros",
 }
 
 export function SupplementDetailModal({
