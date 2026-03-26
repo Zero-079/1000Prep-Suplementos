@@ -6,6 +6,7 @@ import { HeroSection } from "@/components/hero-section"
 import { TopCategories } from "@/components/top-categories"
 import { BestSellers } from "@/components/best-sellers"
 import { BenefitsStrip } from "@/components/benefits-strip"
+import { ComingSoonBanner } from "@/components/coming-soon-banner"
 import { Footer } from "@/components/footer"
 
 export default function Home() {
@@ -16,6 +17,7 @@ export default function Home() {
       <TopCategories />
       <BestSellers />
       <BenefitsStrip />
+      <ComingSoonBanner />
       <Footer />
     </div>
   )

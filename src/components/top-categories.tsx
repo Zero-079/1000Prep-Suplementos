@@ -1,20 +1,22 @@
 // src/components/top-categories.tsx
 "use client"
 
+import Image from "next/image"
 import Link from "next/link"
 import { ArrowRight } from "lucide-react"
 
 interface Category {
   name: string
+  image: string
 }
 
 const categories: Category[] = [
-  { name: "Proteínas" },
-  { name: "Vitaminas" },
-  { name: "Creatina" },
-  { name: "Pre-entreno" },
-  { name: "Quemadores de grasa" },
-  { name: "Aminoácidos" },
+  { name: "Proteínas", image: "https://res.cloudinary.com/dizwnyqfy/image/upload/v1773420526/71f_UBXh2vL._AC_UF1000_1000_QL80__ilpygy.jpg" },
+  { name: "Vitaminas", image: "https://res.cloudinary.com/dizwnyqfy/image/upload/v1774366656/125559-en-US-690px-01_tcjchc.png" },
+  { name: "Creatina", image: "https://res.cloudinary.com/dizwnyqfy/image/upload/v1774366799/muscletech-int-platinum-100-creatine-monohydrate_kkq97k.png" },
+  { name: "Pre-entreno", image: "https://res.cloudinary.com/dizwnyqfy/image/upload/v1774366738/intenze-fruit-punch_vxehwa.jpg" },
+  { name: "Quemadores de grasa", image: "https://res.cloudinary.com/dizwnyqfy/image/upload/v1774372880/71SxaYftr-L._AC_UF1000_1000_QL80__yu8s1n.jpg" },
+  { name: "Aminoácidos", image: "https://res.cloudinary.com/dizwnyqfy/image/upload/v1773419791/71_R-I6pUjL._AC_UF894_1000_QL80__aoqbx7.jpg" },
 ]
 
 export function TopCategories() {
@@ -43,16 +45,16 @@ export function TopCategories() {
               href="/catalogo"
               className="group flex-none w-[130px] md:w-auto rounded-2xl border border-border/60 bg-card overflow-hidden hover:border-primary/30 hover:shadow-md transition-all duration-200"
             >
-              {/* Image placeholder */}
-              <div className="aspect-square bg-gradient-to-br from-muted to-muted/50 relative overflow-hidden">
-                {/* Decorative circles */}
-                <div className="absolute top-3 right-3 w-8 h-8 rounded-full border border-foreground/5" />
-                <div className="absolute bottom-4 left-3 w-5 h-5 rounded-full bg-foreground/[0.03]" />
-
-                {/* Label */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <p className="text-xs text-muted-foreground/40 font-medium">400 × 400</p>
-                </div>
+              {/* Image */}
+              <div className="aspect-square relative overflow-hidden bg-gradient-to-br from-muted to-muted/50">
+                <Image
+                  src={cat.image}
+                  alt={cat.name}
+                  fill
+                  className="object-contain p-4 transition-transform duration-300 group-hover:scale-105"
+                  sizes="(max-width: 768px) 130px, 16vw"
+                  unoptimized
+                />
               </div>
 
               {/* Category name */}
