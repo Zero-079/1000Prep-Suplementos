@@ -4,7 +4,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { Menu, X, Search, ShoppingCart, LogOut, ChevronDown } from "lucide-react"
+import { Menu, X, Search, ShoppingCart, LogOut, ChevronDown, Package, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -201,6 +201,20 @@ export function Header() {
                       <span className="text-xs text-muted-foreground">{user.email}</span>
                     </div>
                   </div>
+                  <Link
+                    href="/cuenta"
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-foreground hover:bg-muted/60 transition-colors text-sm"
+                  >
+                    <User className="size-4" />Mi cuenta
+                  </Link>
+                  <Link
+                    href="/pedidos"
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-foreground hover:bg-muted/60 transition-colors text-sm"
+                  >
+                    <Package className="size-4" />Mis pedidos
+                  </Link>
                   <button
                     onClick={() => { setIsOpen(false); logout() }}
                     className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-destructive hover:bg-destructive/10 transition-colors text-sm"
@@ -260,6 +274,18 @@ function AccountMenu({ user, onLogout }: { user: HeaderUser; onLogout?: () => vo
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
+          <DropdownMenuItem asChild className="rounded-lg px-3 py-2.5 cursor-pointer">
+            <Link href="/cuenta">
+              <User className="size-4" />
+              <span>Mi cuenta</span>
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild className="rounded-lg px-3 py-2.5 cursor-pointer">
+            <Link href="/pedidos">
+              <Package className="size-4" />
+              <span>Mis pedidos</span>
+            </Link>
+          </DropdownMenuItem>
           <DropdownMenuItem asChild className="rounded-lg px-3 py-2.5 cursor-pointer">
             <Link href="/catalogo">
               <span>Suplementos</span>

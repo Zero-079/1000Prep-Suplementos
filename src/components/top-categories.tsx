@@ -4,19 +4,21 @@
 import Image from "next/image"
 import Link from "next/link"
 import { ArrowRight } from "lucide-react"
+import type { SupplementCategoryFilter } from "@/features/supplements/types/supplement"
 
 interface Category {
   name: string
   image: string
+  categoryValue: SupplementCategoryFilter
 }
 
 const categories: Category[] = [
-  { name: "Proteínas", image: "https://res.cloudinary.com/dizwnyqfy/image/upload/v1773420526/71f_UBXh2vL._AC_UF1000_1000_QL80__ilpygy.jpg" },
-  { name: "Vitaminas", image: "https://res.cloudinary.com/dizwnyqfy/image/upload/v1774366656/125559-en-US-690px-01_tcjchc.png" },
-  { name: "Creatina", image: "https://res.cloudinary.com/dizwnyqfy/image/upload/v1774366799/muscletech-int-platinum-100-creatine-monohydrate_kkq97k.png" },
-  { name: "Pre-entreno", image: "https://res.cloudinary.com/dizwnyqfy/image/upload/v1774366738/intenze-fruit-punch_vxehwa.jpg" },
-  { name: "Quemadores de grasa", image: "https://res.cloudinary.com/dizwnyqfy/image/upload/v1774372880/71SxaYftr-L._AC_UF1000_1000_QL80__yu8s1n.jpg" },
-  { name: "Aminoácidos", image: "https://res.cloudinary.com/dizwnyqfy/image/upload/v1773419791/71_R-I6pUjL._AC_UF894_1000_QL80__aoqbx7.jpg" },
+  { name: "Proteínas", image: "https://res.cloudinary.com/dizwnyqfy/image/upload/v1773420526/71f_UBXh2vL._AC_UF1000_1000_QL80__ilpygy.jpg", categoryValue: "PROTEIN" },
+  { name: "Vitaminas", image: "https://res.cloudinary.com/dizwnyqfy/image/upload/v1774366656/125559-en-US-690px-01_tcjchc.png", categoryValue: "VITAMINS" },
+  { name: "Creatina", image: "https://res.cloudinary.com/dizwnyqfy/image/upload/v1774366799/muscletech-int-platinum-100-creatine-monohydrate_kkq97k.png", categoryValue: "CREATINE" },
+  { name: "Pre-entreno", image: "https://res.cloudinary.com/dizwnyqfy/image/upload/v1774366738/intenze-fruit-punch_vxehwa.jpg", categoryValue: "PRE_WORKOUT" },
+  { name: "Quemadores de grasa", image: "https://res.cloudinary.com/dizwnyqfy/image/upload/v1774372880/71SxaYftr-L._AC_UF1000_1000_QL80__yu8s1n.jpg", categoryValue: "FAT_BURNER" },
+  { name: "Aminoácidos", image: "https://res.cloudinary.com/dizwnyqfy/image/upload/v1773419791/71_R-I6pUjL._AC_UF894_1000_QL80__aoqbx7.jpg", categoryValue: "AMINO_ACIDS" },
 ]
 
 export function TopCategories() {
@@ -42,7 +44,7 @@ export function TopCategories() {
           {categories.map((cat) => (
             <Link
               key={cat.name}
-              href="/catalogo"
+              href={`/catalogo?category=${cat.categoryValue}`}
               className="group flex-none w-[130px] md:w-auto rounded-2xl border border-border/60 bg-card overflow-hidden hover:border-primary/30 hover:shadow-md transition-all duration-200"
             >
               {/* Image */}

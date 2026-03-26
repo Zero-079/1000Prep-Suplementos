@@ -2,6 +2,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
+import { useSearchParams } from "next/navigation"
 import { FlaskConical } from "lucide-react"
 import { SupplementCard } from "./supplement-card"
 import type { Supplement, SupplementCategoryFilter } from "@/features/supplements/types/supplement"
@@ -54,7 +55,14 @@ export function SupplementsFilter({
   error,
   onOpenDetail,
 }: SupplementsFilterProps) {
-  const [activeFilter, setActiveFilter] = useState<SupplementCategoryFilter>("ALL")
+  const searchParams = useSearchParams()
+  const categoryParam = searchParams.get("category") as SupplementCategoryFilter | null
+  const initialFilter: SupplementCategoryFilter =
+    categoryParam && FILTER_OPTIONS.some((f) => f.value === categoryParam)
+      ? categoryParam
+      : "ALL"
+
+  const [activeFilter, setActiveFilter] = useState<SupplementCategoryFilter>(initialFilter)
 
   const filtered = useMemo(() => {
     if (activeFilter === "ALL") return supplements

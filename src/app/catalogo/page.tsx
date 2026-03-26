@@ -1,7 +1,7 @@
 // src/app/catalogo/page.tsx
 "use client"
 
-import { useState } from "react"
+import { useState, Suspense } from "react"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { SupplementsFilter } from "@/features/supplements/components/supplements-filter"
@@ -43,12 +43,14 @@ export default function CatalogoPage() {
 
       <section className="px-6 lg:px-8 py-8 pb-20">
         <div className="max-w-7xl mx-auto flex flex-col gap-8">
-          <SupplementsFilter
-            supplements={supplements}
-            isLoading={isLoading}
-            error={error}
-            onOpenDetail={openDetail}
-          />
+          <Suspense fallback={null}>
+            <SupplementsFilter
+              supplements={supplements}
+              isLoading={isLoading}
+              error={error}
+              onOpenDetail={openDetail}
+            />
+          </Suspense>
           <SupplementsInfoStrip />
         </div>
       </section>
