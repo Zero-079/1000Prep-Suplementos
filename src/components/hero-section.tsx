@@ -72,9 +72,6 @@ export function HeroSection() {
           </div>
         </div>
       </div>
-
-      {/* Bottom fade to background — smooth transition to next section */}
-      <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-background via-background/60 to-transparent pointer-events-none" />
     </section>
   )
 }

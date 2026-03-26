@@ -1,27 +1,51 @@
 // src/components/best-sellers.tsx
 "use client"
 
+import Image from "next/image"
 import Link from "next/link"
 import { ArrowRight, Plus } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { useSupplements } from "@/features/supplements/hooks/useSupplements"
+import { useSupplementCart } from "@/features/supplements/context/supplements-cart-context"
+import { formatCOP } from "@/lib/utils"
 
-interface Product {
-  name: string
-  price: string
+const CATEGORY_LABELS: Record<string, string> = {
+  PROTEIN: "Proteínas",
+  VITAMINS: "Vitaminas",
+  CREATINE: "Creatina",
+  PRE_WORKOUT: "Pre-entreno",
+  FAT_BURNER: "Quemadores de grasa",
+  AMINO_ACIDS: "Aminoácidos",
+  OTHER: "Otros",
 }
 
-const products: Product[] = [
-  { name: "Whey Protein Isolate 900g", price: "$189.900" },
-  { name: "Creatina Monohidrato 300g", price: "$64.900" },
-  { name: "Pre-entreno C4 60 serv", price: "$129.900" },
-  { name: "BCAA 2:1:1 300g", price: "$79.900" },
-  { name: "Multivitamínico Hombre", price: "$49.900" },
-  { name: "Quemador L-Carnitina", price: "$59.900" },
-  { name: "Proteína Vegana 900g", price: "$169.900" },
-  { name: "Glutamina 500g", price: "$74.900" },
-]
+function SkeletonCard() {
+  return (
+    <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-md animate-pulse">
+      <div className="aspect-square bg-muted" />
+      <div className="p-4 flex flex-col gap-3">
+        <div>
+          <div className="h-4 bg-muted rounded w-3/4" />
+          <div className="h-3 bg-muted rounded w-1/2 mt-1" />
+          <div className="h-3 bg-muted rounded w-full mt-2" />
+          <div className="h-3 bg-muted rounded w-full mt-1" />
+        </div>
+        <div className="flex justify-between pt-2 border-t border-border/50">
+          <div className="h-5 bg-muted rounded w-1/3" />
+          <div className="h-8 bg-muted rounded-full w-20" />
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export function BestSellers() {
+  const { supplements, isLoading, error } = useSupplements()
+  const { addItem } = useSupplementCart()
+
+  const bestSellers = supplements.slice(0, 8)
+
   return (
     <section className="px-6 lg:px-8 py-16 md:py-20">
       <div className="max-w-7xl mx-auto">
@@ -41,40 +65,87 @@ export function BestSellers() {
 
         {/* Grid — 2 cols mobile, 4 cols desktop */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-          {products.map((product) => (
-            <article
-              key={product.name}
-              className="group bg-card rounded-2xl border border-border/60 overflow-hidden hover:border-primary/30 hover:shadow-md transition-all duration-200"
-            >
-              {/* Image placeholder */}
-              <div className="aspect-square bg-gradient-to-br from-muted to-muted/50 relative overflow-hidden">
-                <div className="absolute top-3 right-3 w-6 h-6 rounded-full border border-foreground/5" />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <p className="text-[11px] text-muted-foreground/40 font-medium">400 × 400</p>
+          {isLoading
+            ? Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)
+            : error
+              ? (
+                <div className="col-span-full py-16 text-center">
+                  <p className="text-destructive font-medium text-lg">Error al cargar los productos</p>
+                  <p className="text-muted-foreground text-sm mt-1">{error}</p>
                 </div>
-              </div>
+              )
+              : bestSellers.map((supplement) => {
+                  const firstImage = supplement.images?.[0]?.url ?? null
+                  const categoryLabel = CATEGORY_LABELS[supplement.category] ?? supplement.category
 
-              {/* Info */}
-              <div className="p-3 md:p-4 flex flex-col gap-2">
-                <h3 className="text-sm font-semibold text-foreground leading-snug line-clamp-2 min-h-[2.5rem]">
-                  {product.name}
-                </h3>
+                  return (
+                    <article
+                      key={supplement.id}
+                      className="group bg-card rounded-2xl border border-border overflow-hidden shadow-md hover:shadow-lg transition-shadow"
+                    >
+                      {/* Image */}
+                      <div className="relative aspect-square overflow-hidden bg-white">
+                        {firstImage ? (
+                          <Image
+                            src={firstImage}
+                            alt={supplement.name}
+                            fill
+                            className="object-contain p-4 transition-transform duration-500 group-hover:scale-105"
+                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                            loading="eager"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-muted">
+                            <span className="text-5xl">🧪</span>
+                          </div>
+                        )}
+                        <div className="absolute top-3 left-3">
+                          <Badge className="bg-card/90 text-foreground backdrop-blur-sm text-[11px] font-medium border-0 shadow-sm">
+                            {categoryLabel}
+                          </Badge>
+                        </div>
+                      </div>
 
-                <div className="flex items-center justify-between pt-1">
-                  <span className="text-base md:text-lg font-bold text-primary leading-none">
-                    {product.price}
-                  </span>
-                  <Button
-                    size="sm"
-                    className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 gap-1 h-8 px-3"
-                  >
-                    <Plus className="size-3.5" />
-                    <span className="text-xs">Agregar</span>
-                  </Button>
-                </div>
-              </div>
-            </article>
-          ))}
+                      {/* Info */}
+                      <div className="p-4 flex flex-col gap-3 flex-1">
+                        <div>
+                          <h3 className="font-semibold text-foreground text-base leading-snug line-clamp-2 min-h-[2.75rem]">
+                            {supplement.name}
+                          </h3>
+                          <p className="text-primary text-xs font-medium mt-0.5">
+                            {supplement.brand.name}
+                          </p>
+                          <p className="text-muted-foreground text-sm mt-1 leading-relaxed line-clamp-2 min-h-[2.5rem]">
+                            {supplement.description}
+                          </p>
+                        </div>
+
+                        {supplement.servingSize && (
+                          <span className="bg-primary/10 text-primary text-[11px] px-2.5 py-1 rounded-full font-medium w-fit">
+                            {supplement.servingSize}
+                          </span>
+                        )}
+
+                        <div className="flex items-center justify-between pt-2 border-t border-border/50 mt-auto">
+                          <span className="text-lg font-bold text-primary leading-none">
+                            {formatCOP(supplement.price)}
+                          </span>
+                          <Button
+                            size="sm"
+                            className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 gap-1"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              addItem(supplement)
+                            }}
+                          >
+                            <Plus className="size-4" />
+                            <span className="sr-only sm:not-sr-only">Agregar</span>
+                          </Button>
+                        </div>
+                      </div>
+                    </article>
+                  )
+                })}
         </div>
       </div>
     </section>
