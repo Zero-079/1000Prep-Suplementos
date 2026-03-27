@@ -32,7 +32,7 @@ export function SupplementCard({ supplement, onOpenDetail }: SupplementCardProps
 
   return (
     <article
-      className="group bg-card rounded-2xl border border-border overflow-hidden shadow-md hover:shadow-lg transition-shadow cursor-pointer"
+      className="group bg-card rounded-2xl border border-border overflow-hidden hover:border-primary/30 hover:shadow-md transition-all duration-200 cursor-pointer"
       onClick={() => onOpenDetail(supplement)}
     >
       <div className="relative aspect-square overflow-hidden bg-white">

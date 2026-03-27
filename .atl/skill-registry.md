@@ -82,12 +82,20 @@
 
 ## Project Conventions
 
+### Frontend (1000Prep-Suplementos)
 - **Tech Stack**: Next.js 16.1.7 with React 19.2.0, TypeScript 5.x
 - **Architecture**: Feature-based architecture with App Router
 - **UI Library**: Radix UI components with Tailwind CSS 4.1.9
 - **Form Handling**: react-hook-form 7.72.0 with zod 3.25.76 validation
 - **Package Manager**: npm (package-lock.json present)
 - **Path Aliases**: @/* → ./src/* (configured in tsconfig.json)
+
+### Backend (back_100preps/1000preps)
+- **Tech Stack**: NestJS 11.x with TypeScript 5.7.x
+- **ORM**: Prisma 6.19.2 with PostgreSQL 16
+- **Auth**: Passport.js + JWT
+- **Testing**: Jest 30 + supertest
+- **Package Manager**: pnpm
 
 ## Agent Configuration Files
 

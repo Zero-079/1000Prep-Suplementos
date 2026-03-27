@@ -81,7 +81,7 @@ export function BestSellers() {
                   return (
                     <article
                       key={supplement.id}
-                      className="group bg-card rounded-2xl border border-border overflow-hidden shadow-md hover:shadow-lg transition-shadow"
+                      className="group bg-card rounded-2xl border border-border overflow-hidden hover:border-primary/30 hover:shadow-md transition-all duration-200"
                     >
                       {/* Image */}
                       <div className="relative aspect-square overflow-hidden bg-white">

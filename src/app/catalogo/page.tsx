@@ -6,7 +6,6 @@ import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { SupplementsFilter } from "@/features/supplements/components/supplements-filter"
 import { SupplementDetailModal } from "@/features/supplements/components/supplement-detail-modal"
-import { SupplementsMiniCart } from "@/features/supplements/components/supplements-mini-cart"
 import { SupplementsInfoStrip } from "@/features/supplements/components/supplements-info-strip"
 import { useSupplements } from "@/features/supplements/hooks/useSupplements"
 import { useRestorePendingCart } from "@/features/supplements/hooks/useRestorePendingCart"
@@ -61,7 +60,6 @@ export default function CatalogoPage() {
         onOpenChange={setDetailOpen}
       />
 
-      <SupplementsMiniCart />
       <Footer />
     </div>
   )
