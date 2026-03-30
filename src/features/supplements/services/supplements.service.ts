@@ -15,6 +15,19 @@ class SupplementsService {
       throw error
     }
   }
+
+  async searchSupplements(query: string): Promise<Supplement[]> {
+    try {
+      const data = await fetchAPI<Supplement[]>("/supplements", {
+        method: "GET",
+        params: { search: query },
+      })
+      return data.filter((s) => s.isActive === true && s.stock > 0)
+    } catch (error) {
+      console.error("Error searching supplements:", error)
+      throw error
+    }
+  }
 }
 
 export const supplementsService = new SupplementsService()

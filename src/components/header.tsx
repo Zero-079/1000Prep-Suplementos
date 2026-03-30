@@ -4,12 +4,15 @@
 import { useState, useRef, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
+import { useRouter } from "next/navigation"
 import { Menu, X, Search, ShoppingCart, LogOut, ChevronDown, Package, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useAuth } from "@/features/auth/hooks/useAuth"
 import { useSupplementCart } from "@/features/supplements/context/supplements-cart-context"
+import { useSearch } from "@/features/supplements/hooks/useSearch"
+import { SearchResultsDropdown } from "@/features/supplements/components/search-results-dropdown"
 import { SupplementsMiniCart } from "@/features/supplements/components/supplements-mini-cart"
 import { SupplementCheckoutModal } from "@/features/supplements/components/supplement-checkout-modal"
 import {
@@ -38,6 +41,15 @@ export function Header() {
   const [searchClosing, setSearchClosing] = useState(false)
   const [cartOpen, setCartOpen] = useState(false)
   const [checkoutOpen, setCheckoutOpen] = useState(false)
+  const router = useRouter()
+  const { 
+    query, 
+    setQuery, 
+    results, 
+    isLoading, 
+    isOpen: searchDropdownOpen, 
+    setIsOpen: setSearchDropdownOpen 
+  } = useSearch(300) // debounce de 300ms
   const { user, isAuthenticated, isAuthLoading, logout } = useAuth()
   const { totalItems } = useSupplementCart()
   const searchRef = useRef<HTMLDivElement>(null)
@@ -47,23 +59,26 @@ export function Header() {
     setCheckoutOpen(true)
   }
 
-  // Cerrar search con animación (para click fuera)
-  const closeSearchAnimated = () => {
-    setSearchClosing(true)
-    setTimeout(() => {
-      setSearchOpen(false)
-      setSearchClosing(false)
-    }, 200)
-  }
-
   // Cerrar search inmediatamente (para click en X o Escape)
   const closeSearchImmediate = () => {
     setSearchOpen(false)
     setSearchClosing(false)
+    setSearchDropdownOpen(false)
+    setQuery("")
   }
 
   // Cerrar search al hacer click fuera (con animación)
   useEffect(() => {
+    const closeSearchAnimated = () => {
+      setSearchClosing(true)
+      setSearchDropdownOpen(false)
+      setTimeout(() => {
+        setSearchOpen(false)
+        setSearchClosing(false)
+        setQuery("")
+      }, 200)
+    }
+
     function handleClick(e: MouseEvent) {
       if (searchOpen && !searchClosing && searchRef.current && !searchRef.current.contains(e.target as Node)) {
         closeSearchAnimated()
@@ -92,42 +107,97 @@ export function Header() {
           </Link>
 
           {/* Center — Nav links + Search (desktop) */}
-          <div className="hidden md:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
-            {navLinks.map((link) => (
-              <Link
-                key={link.label}
-                href={link.href}
-                className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted/60 transition-colors"
-              >
-                {link.label}
-              </Link>
-            ))}
-
-            {/* Inline search */}
-            <div className="relative ml-2" ref={searchRef}>
+          <nav className="hidden md:flex items-center gap-1 max-w-xl mx-auto">
+            {/* Nav links — se ocultan cuando search está abierto */}
+            {!searchOpen && !searchClosing && (
+              <>
+                {navLinks.map((link) => (
+                  <Link
+                    key={link.label}
+                    href={link.href}
+                    className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted/60 transition-colors"
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </>
+            )}
+            
+            {/* Search — se expande cuando searchOpen */}
+            <div 
+              className={`relative transition-all duration-300 ease-in-out ${
+                searchOpen || searchClosing 
+                  ? "flex-1" 
+                  : ""
+              }`}
+              ref={searchRef}
+            >
               {searchOpen && !searchClosing && (
                 <div className="flex items-center gap-1 animate-in fade-in slide-in-from-right-2 duration-200">
-                  <Input
-                    autoFocus
-                    placeholder="Buscar suplementos..."
-                    className="h-9 w-48 lg:w-64 rounded-full text-sm bg-muted/60 border-border/60 pr-9"
-                    onKeyDown={(e) => e.key === "Escape" && closeSearchImmediate()}
-                  />
-                  <button
-                    onClick={closeSearchImmediate}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
+                  <div className="relative w-full">
+                    <Input
+                      autoFocus
+                      placeholder="Buscar suplementos..."
+                      className="h-10 w-80 lg:w-96 rounded-full text-sm bg-muted/60 border-border/60 pr-10"
+                      value={query}
+                      onChange={(e) => {
+                        setQuery(e.target.value)
+                        setSearchDropdownOpen(true)
+                      }}
+                      onFocus={() => query.length >= 2 && setSearchDropdownOpen(true)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Escape") {
+                          setSearchDropdownOpen(false)
+                          closeSearchImmediate()
+                        }
+                        if (e.key === "Enter" && query.trim().length >= 2) {
+                          setSearchDropdownOpen(false)
+                          closeSearchImmediate()
+                          router.push(`/catalogo?search=${encodeURIComponent(query.trim())}`)
+                        }
+                      }}
+                    />
+                    <button
+                      onClick={() => {
+                        setSearchDropdownOpen(false)
+                        setQuery("")
+                        closeSearchImmediate()
+                      }}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                    
+                    {/* Dropdown de resultados — expandido para matchear el ancho del input */}
+                    {searchDropdownOpen && (
+                      <SearchResultsDropdown
+                        results={results}
+                        isLoading={isLoading}
+                        query={query}
+                        onSelect={(supplement) => {
+                          setSearchDropdownOpen(false)
+                          setQuery("")
+                          closeSearchImmediate()
+                          router.push(`/catalogo?highlight=${supplement.id}`)
+                        }}
+                        onViewAll={() => {
+                          setSearchDropdownOpen(false)
+                          closeSearchImmediate()
+                          router.push(`/catalogo?search=${encodeURIComponent(query.trim())}`)
+                        }}
+                        className="w-80 lg:w-96"
+                      />
+                    )}
+                  </div>
                 </div>
               )}
               {searchClosing && (
                 <div className="flex items-center gap-1 animate-out fade-out zoom-out-95 duration-200 origin-center">
                   <Input
                     placeholder="Buscar suplementos..."
-                    className="h-9 w-48 lg:w-64 rounded-full text-sm bg-muted/60 border-border/60 pr-9"
+                    className="h-10 w-80 lg:w-96 rounded-full text-sm bg-muted/60 border-border/60 pr-10"
                   />
-                  <button className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground">
+                  <button className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-muted-foreground">
                     <X className="w-4 h-4" />
                   </button>
                 </div>
@@ -142,7 +212,7 @@ export function Header() {
                 </button>
               )}
             </div>
-          </div>
+          </nav>
 
           {/* Right — Cart + Auth (desktop) */}
           <div className="hidden md:flex items-center gap-2">
@@ -222,10 +292,57 @@ export function Header() {
               <Input
                 autoFocus
                 placeholder="Buscar suplementos..."
-                className="h-10 w-full rounded-full text-sm bg-muted/60 border-border/60 pl-10"
-                onKeyDown={(e) => e.key === "Escape" && setSearchOpen(false)}
+                className="h-10 w-full rounded-full text-sm bg-muted/60 border-border/60 pl-10 pr-10"
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value)
+                  setSearchDropdownOpen(true)
+                }}
+                onFocus={() => query.length >= 2 && setSearchDropdownOpen(true)}
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") {
+                    setSearchDropdownOpen(false)
+                    closeSearchImmediate()
+                  }
+                  if (e.key === "Enter" && query.trim().length >= 2) {
+                    setSearchDropdownOpen(false)
+                    closeSearchImmediate()
+                    router.push(`/catalogo?search=${encodeURIComponent(query.trim())}`)
+                  }
+                }}
               />
+              <button
+                onClick={() => {
+                  setSearchDropdownOpen(false)
+                  setQuery("")
+                  closeSearchImmediate()
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
+            
+            {/* Dropdown de resultados para mobile */}
+            {searchDropdownOpen && (
+              <SearchResultsDropdown
+                results={results}
+                isLoading={isLoading}
+                query={query}
+                onSelect={(supplement) => {
+                  setSearchDropdownOpen(false)
+                  setQuery("")
+                  closeSearchImmediate()
+                  router.push(`/catalogo?highlight=${supplement.id}`)
+                }}
+                onViewAll={() => {
+                  setSearchDropdownOpen(false)
+                  closeSearchImmediate()
+                  router.push(`/catalogo?search=${encodeURIComponent(query.trim())}`)
+                }}
+                className="w-full mt-1"
+              />
+            )}
           </div>
         )}
 

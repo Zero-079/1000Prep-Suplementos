@@ -2,8 +2,8 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { useSearchParams } from "next/navigation"
-import { FlaskConical } from "lucide-react"
+import { useSearchParams, useRouter } from "next/navigation"
+import { FlaskConical, X } from "lucide-react"
 import { SupplementCard } from "./supplement-card"
 import type { Supplement, SupplementCategoryFilter } from "@/features/supplements/types/supplement"
 import { cn } from "@/lib/utils"
@@ -56,7 +56,9 @@ export function SupplementsFilter({
   onOpenDetail,
 }: SupplementsFilterProps) {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const categoryParam = searchParams.get("category") as SupplementCategoryFilter | null
+  const searchParam = searchParams.get("search")
   const initialFilter: SupplementCategoryFilter =
     categoryParam && FILTER_OPTIONS.some((f) => f.value === categoryParam)
       ? categoryParam
@@ -65,9 +67,26 @@ export function SupplementsFilter({
   const [activeFilter, setActiveFilter] = useState<SupplementCategoryFilter>(initialFilter)
 
   const filtered = useMemo(() => {
-    if (activeFilter === "ALL") return supplements
-    return supplements.filter((s) => s.category === activeFilter)
-  }, [supplements, activeFilter])
+    let result = supplements
+
+    // Filtrar por categoría
+    if (activeFilter !== "ALL") {
+      result = result.filter((s) => s.category === activeFilter)
+    }
+
+    // Filtrar por búsqueda de texto
+    if (searchParam && searchParam.trim().length >= 2) {
+      const searchTerm = searchParam.trim().toLowerCase()
+      result = result.filter(
+        (s) =>
+          s.name.toLowerCase().includes(searchTerm) ||
+          s.description.toLowerCase().includes(searchTerm) ||
+          s.brand.name.toLowerCase().includes(searchTerm)
+      )
+    }
+
+    return result
+  }, [supplements, activeFilter, searchParam])
 
   return (
     <div className="bg-card rounded-3xl border border-border shadow-md overflow-hidden">
@@ -105,6 +124,21 @@ export function SupplementsFilter({
       </div>
 
       <div className="px-6 pb-6 md:px-8 md:pb-8">
+        {searchParam && (
+          <div className="bg-muted/60 rounded-lg px-4 py-3 flex items-center justify-between mb-4">
+            <p className="text-sm text-muted-foreground">
+              Resultados para: <span className="font-medium text-foreground">"{searchParam}"</span>
+            </p>
+            <button
+              onClick={() => router.push("/catalogo")}
+              className="text-sm text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
+            >
+              <X className="w-3 h-3" />
+              Limpiar
+            </button>
+          </div>
+        )}
+
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {Array.from({ length: 8 }).map((_, i) => (
@@ -117,8 +151,22 @@ export function SupplementsFilter({
             <p className="text-muted-foreground text-sm mt-1">{error}</p>
           </div>
         ) : filtered.length === 0 ? (
-          <div className="py-16 text-center text-muted-foreground">
-            <p className="text-lg font-medium">No hay suplementos en esta categoría</p>
+          <div className="text-center py-12">
+            {searchParam ? (
+              <>
+                <p className="text-muted-foreground text-lg">
+                  No se encontraron suplementos para "{searchParam}"
+                </p>
+                <button
+                  onClick={() => router.push("/catalogo")}
+                  className="mt-4 text-primary hover:text-primary/80 transition-colors"
+                >
+                  Ver todos los suplementos
+                </button>
+              </>
+            ) : (
+              <p className="text-lg font-medium text-muted-foreground">No hay suplementos en esta categoría</p>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">

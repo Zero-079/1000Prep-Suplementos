@@ -15,7 +15,7 @@ import type { SectionId } from "@/features/account/data/account-data"
 export default function CuentaPage() {
   const [activeSection, setActiveSection] = useState<SectionId>("info")
   const { user, isAuthLoading } = useAuth()
-  const { addresses, isLoading: isAddressesLoading, error: addressesError } = useAddresses()
+  const { addresses, isLoading: isAddressesLoading, error: addressesError, refetch: refetchAddresses } = useAddresses()
 
   return (
     <div className="min-h-screen bg-muted/40">
@@ -51,6 +51,7 @@ export default function CuentaPage() {
                 addresses={addresses}
                 isLoading={isAddressesLoading}
                 error={addressesError}
+                onAddressAdded={refetchAddresses}
               />
             )}
             {activeSection === "password" && <ChangePasswordSection />}
