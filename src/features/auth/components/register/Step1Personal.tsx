@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import type { RegisterFormData } from "../../schemas/register.schema"
+import { GoogleAuthButton } from "../google-auth-button"
 
 interface Step1PersonalProps {
   onNext: () => void
@@ -52,6 +53,14 @@ export function Step1Personal({ onNext }: Step1PersonalProps) {
       <Button type="button" onClick={handleContinue} className="h-11 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 mt-1">
         Continuar
       </Button>
+
+      <div className="flex items-center gap-3 -my-3">
+        <div className="flex-1 h-px bg-border" />
+        <span className="text-xs text-muted-foreground uppercase tracking-wide">o</span>
+        <div className="flex-1 h-px bg-border" />
+      </div>
+
+      <GoogleAuthButton label="Registrarse con Google" />
 
       <p className="text-center text-sm text-muted-foreground">
         {"Ya tienes cuenta? "}

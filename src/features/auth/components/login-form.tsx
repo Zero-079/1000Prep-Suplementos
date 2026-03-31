@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { loginSchema, type LoginFormData } from "../schemas/login.schema"
+import { GoogleAuthButton } from "./google-auth-button"
 
 interface LoginFormProps {
   onLogin: (data: LoginFormData) => Promise<void> | void
@@ -105,6 +106,14 @@ export function LoginForm({ onLogin }: LoginFormProps) {
       >
         {isSubmitting ? "Iniciando sesion..." : "Iniciar sesion"}
       </Button>
+
+      <div className="flex items-center gap-3 -my-3">
+        <div className="flex-1 h-px bg-border" />
+        <span className="text-xs text-muted-foreground uppercase tracking-wide">o</span>
+        <div className="flex-1 h-px bg-border" />
+      </div>
+
+      <GoogleAuthButton label="Iniciar sesion con Google" />
 
       <p className="text-center text-sm text-muted-foreground">
         {"No tienes cuenta? "}
