@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { useFormContext } from "react-hook-form"
 import Link from "next/link"
 import { User, Mail, Phone } from "lucide-react"
@@ -8,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import type { RegisterFormData } from "../../schemas/register.schema"
 import { GoogleAuthButton } from "../google-auth-button"
+import { authService } from "../../services/auth.service"
 
 interface Step1PersonalProps {
   onNext: () => void
@@ -15,10 +17,16 @@ interface Step1PersonalProps {
 
 export function Step1Personal({ onNext }: Step1PersonalProps) {
   const { register, formState: { errors }, trigger } = useFormContext<RegisterFormData>()
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false)
 
   const handleContinue = async () => {
     const isValid = await trigger(["name", "email", "phone"])
     if (isValid) onNext()
+  }
+
+  const handleGoogleRegister = () => {
+    setIsGoogleLoading(true)
+    authService.loginWithGoogle()
   }
 
   return (
@@ -60,7 +68,11 @@ export function Step1Personal({ onNext }: Step1PersonalProps) {
         <div className="flex-1 h-px bg-border" />
       </div>
 
-      <GoogleAuthButton label="Registrarse con Google" />
+      <GoogleAuthButton 
+        label="Registrarse con Google" 
+        onClick={handleGoogleRegister}
+        disabled={isGoogleLoading}
+      />
 
       <p className="text-center text-sm text-muted-foreground">
         {"Ya tienes cuenta? "}

@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { loginSchema, type LoginFormData } from "../schemas/login.schema"
 import { GoogleAuthButton } from "./google-auth-button"
+import { authService } from "../services/auth.service"
 
 interface LoginFormProps {
   onLogin: (data: LoginFormData) => Promise<void> | void
@@ -18,6 +19,7 @@ interface LoginFormProps {
 
 export function LoginForm({ onLogin }: LoginFormProps) {
   const [showPassword, setShowPassword] = useState(false)
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false)
 
   const {
     register,
@@ -33,6 +35,11 @@ export function LoginForm({ onLogin }: LoginFormProps) {
 
   async function onSubmit(data: LoginFormData) {
     await onLogin(data)
+  }
+
+  const handleGoogleLogin = () => {
+    setIsGoogleLoading(true)
+    authService.loginWithGoogle()
   }
 
   return (
@@ -113,7 +120,11 @@ export function LoginForm({ onLogin }: LoginFormProps) {
         <div className="flex-1 h-px bg-border" />
       </div>
 
-      <GoogleAuthButton label="Iniciar sesion con Google" />
+      <GoogleAuthButton 
+        label="Iniciar sesion con Google" 
+        onClick={handleGoogleLogin}
+        disabled={isGoogleLoading}
+      />
 
       <p className="text-center text-sm text-muted-foreground">
         {"No tienes cuenta? "}

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Camera } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils"
 interface AccountUser {
   name: string
   email: string
+  phone?: string
 }
 
 function getInitials(name: string) {
@@ -33,11 +34,8 @@ export function AccountInfoSection({
   isLoading: boolean
 }) {
   const [name, setName] = useState(user?.name ?? "")
+  const [phone, setPhone] = useState(user?.phone ?? "")
   const [isHovered, setIsHovered] = useState(false)
-
-  useEffect(() => {
-    if (user) setName(user.name)
-  }, [user])
 
   return (
     <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-right-4 duration-300">
@@ -96,6 +94,24 @@ export function AccountInfoSection({
                 id="nombre"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                className="h-11 rounded-xl bg-muted/40 border-border/60 focus:bg-background transition-colors"
+              />
+            )}
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="telefono" className="text-sm font-medium text-foreground">
+              Teléfono
+            </Label>
+            {isLoading ? (
+              <SkeletonField />
+            ) : (
+              <Input
+                id="telefono"
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="+57 300 123 4567"
                 className="h-11 rounded-xl bg-muted/40 border-border/60 focus:bg-background transition-colors"
               />
             )}

@@ -1,5 +1,5 @@
-// src/features/auth/services/auth.service.ts
-import { fetchAPI } from '@/config/api';
+// src/config/api.ts
+import { fetchAPI, API_BASE_URL } from '@/config/api';
 
 export interface AddressPayload {
   label: string;
@@ -33,6 +33,9 @@ export interface AuthResponse {
   expiresIn: string;
 }
 
+// URL del backend para OAuth (necesita directa porque es redirect)
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+
 export const authService = {
   async register(data: RegisterPayload): Promise<AuthResponse> {
     return fetchAPI<AuthResponse>('/auth/register', {
@@ -55,5 +58,10 @@ export const authService = {
       method: 'POST',
       credentials: 'include',
     });
+  },
+
+  // Iniciar flujo OAuth con Google — redirige al backend
+  loginWithGoogle() {
+    window.location.href = `${BACKEND_URL}/auth/google`;
   },
 };

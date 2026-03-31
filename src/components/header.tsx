@@ -93,52 +93,41 @@ export function Header() {
       <nav className="max-w-7xl mx-auto bg-background/80 backdrop-blur-md border border-border/50 rounded-2xl shadow-lg">
         <div className="flex items-center justify-between h-16 md:h-20 px-4 md:px-6 lg:px-8">
 
-          {/* Left — Logo */}
-          <Link href="/" className="flex items-center gap-2 shrink-0">
-            <Image
-              src="/LOGO_1000PREP_SUPLEMENTOS.png"
-              alt="1000Prep Logo"
-              width={120}
-              height={32}
-              priority
-              style={{ height: "auto" }}
-              className="w-32"
-            />
-          </Link>
+          {/* GRUPO IZQUIERDO: Logo + Links + Búsqueda */}
+          <div className="flex items-center gap-1.5" ref={searchRef}>
+            {/* Logo */}
+            <Link href="/" className="flex items-center gap-2 shrink-0">
+              <Image
+                src="/LOGO_1000PREP_SUPLEMENTOS.png"
+                alt="1000Prep Logo"
+                width={120}
+                height={32}
+                priority
+                style={{ height: "auto" }}
+                className="w-32"
+              />
+            </Link>
 
-          {/* Center — Nav links + Search (desktop) */}
-          <nav className="hidden md:flex items-center gap-1 max-w-xl mx-auto">
-            {/* Nav links — se ocultan cuando search está abierto */}
-            {!searchOpen && !searchClosing && (
-              <>
-                {navLinks.map((link) => (
-                  <Link
-                    key={link.label}
-                    href={link.href}
-                    className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted/60 transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                ))}
-              </>
-            )}
-            
-            {/* Search — se expande cuando searchOpen */}
-            <div 
-              className={`relative transition-all duration-300 ease-in-out ${
-                searchOpen || searchClosing 
-                  ? "flex-1" 
-                  : ""
-              }`}
-              ref={searchRef}
-            >
+            {/* Nav links — SIEMPRE visibles */}
+            {navLinks.map((link) => (
+              <Link
+                key={link.label}
+                href={link.href}
+                className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted/60 transition-colors"
+              >
+                {link.label}
+              </Link>
+            ))}
+
+            {/* Search — se expande hacia la derecha cuando está abierto */}
+            <div className="relative">
               {searchOpen && !searchClosing && (
                 <div className="flex items-center gap-1 animate-in fade-in slide-in-from-right-2 duration-200">
-                  <div className="relative w-full">
+                  <div className="relative">
                     <Input
                       autoFocus
                       placeholder="Buscar suplementos..."
-                      className="h-10 w-80 lg:w-96 rounded-full text-sm bg-muted/60 border-border/60 pr-10"
+                      className="h-10 w-64 lg:w-80 rounded-full text-sm bg-muted/60 border-border/60 pr-10"
                       value={query}
                       onChange={(e) => {
                         setQuery(e.target.value)
@@ -167,8 +156,8 @@ export function Header() {
                     >
                       <X className="w-4 h-4" />
                     </button>
-                    
-                    {/* Dropdown de resultados — expandido para matchear el ancho del input */}
+
+                    {/* Dropdown de resultados */}
                     {searchDropdownOpen && (
                       <SearchResultsDropdown
                         results={results}
@@ -185,7 +174,7 @@ export function Header() {
                           closeSearchImmediate()
                           router.push(`/catalogo?search=${encodeURIComponent(query.trim())}`)
                         }}
-                        className="w-80 lg:w-96"
+                        className="w-64 lg:w-80"
                       />
                     )}
                   </div>
@@ -195,7 +184,7 @@ export function Header() {
                 <div className="flex items-center gap-1 animate-out fade-out zoom-out-95 duration-200 origin-center">
                   <Input
                     placeholder="Buscar suplementos..."
-                    className="h-10 w-80 lg:w-96 rounded-full text-sm bg-muted/60 border-border/60 pr-10"
+                    className="h-10 w-64 lg:w-80 rounded-full text-sm bg-muted/60 border-border/60 pr-10"
                   />
                   <button className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-muted-foreground">
                     <X className="w-4 h-4" />
@@ -212,11 +201,11 @@ export function Header() {
                 </button>
               )}
             </div>
-          </nav>
+          </div>
 
-          {/* Right — Cart + Auth (desktop) */}
-          <div className="hidden md:flex items-center gap-2">
-            {/* Cart - Ahora funcional */}
+          {/* GRUPO DERECHO: Cart + Auth */}
+          <div className="flex items-center gap-1.5">
+            {/* Cart */}
             <div className="relative">
               <button
                 className="relative p-2.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
@@ -230,12 +219,12 @@ export function Header() {
                   </span>
                 )}
               </button>
-              
+
               {cartOpen && (
                 <div className="absolute right-0 top-full mt-2 z-50 animate-in fade-in zoom-in-95 duration-200 origin-top-right">
-                  <SupplementsMiniCart 
-                    variant="dropdown" 
-                    isOpen={cartOpen} 
+                  <SupplementsMiniCart
+                    variant="dropdown"
+                    isOpen={cartOpen}
                     onOpenChange={setCartOpen}
                     onCheckoutOpen={handleOpenCheckout}
                   />
@@ -251,8 +240,8 @@ export function Header() {
               </div>
             ) : isAuthenticated && user ? (
               <AccountMenu user={{ name: user.name, email: user.email }} onLogout={logout} onOpenChange={(open) => {
-        if (open && cartOpen) setCartOpen(false)
-      }} />
+                if (open && cartOpen) setCartOpen(false)
+              }} />
             ) : (
               <>
                 <Button variant="ghost" className="text-foreground hover:bg-muted rounded-full px-5" asChild>

@@ -22,16 +22,6 @@ export default function CuentaPage() {
       <Header />
 
       <main className="max-w-6xl mx-auto px-6 lg:px-8 pt-32 pb-20">
-        {/* Page header */}
-        <div className="mb-8">
-          <h1 className="font-serif text-3xl md:text-4xl font-bold text-foreground mb-2">
-            Mi <span className="text-primary">Cuenta</span>
-          </h1>
-          <p className="text-muted-foreground">
-            Administra tu información personal y preferencias
-          </p>
-        </div>
-
         {/* 2-column layout */}
         <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6 items-start">
           {/* Column 1 — Sidebar navigation */}
@@ -44,7 +34,7 @@ export default function CuentaPage() {
           {/* Column 2 — Dynamic content */}
           <div className="bg-card border border-border rounded-2xl shadow-sm p-6 lg:p-8 min-h-[400px]">
             {activeSection === "info" && (
-              <AccountInfoSection user={user} isLoading={isAuthLoading} />
+              <AccountInfoSection key={user?.id ?? "loading"} user={user} isLoading={isAuthLoading} />
             )}
             {activeSection === "addresses" && (
               <AddressesSection
