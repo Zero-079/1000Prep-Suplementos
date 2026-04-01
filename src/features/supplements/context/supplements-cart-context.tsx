@@ -6,9 +6,12 @@ import {
   useContext,
   useState,
   useCallback,
+  useEffect,
   type ReactNode,
 } from "react"
 import type { Supplement, SupplementCartItem } from "../types/supplement"
+
+const CART_STORAGE_KEY = "supplement_cart"
 
 interface SupplementCartContextType {
   items: SupplementCartItem[]
@@ -23,7 +26,24 @@ interface SupplementCartContextType {
 const SupplementCartContext = createContext<SupplementCartContextType | null>(null)
 
 export function SupplementCartProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<SupplementCartItem[]>([])
+  const [items, setItems] = useState<SupplementCartItem[]>(() => {
+    if (typeof window === "undefined") return []
+    try {
+      const saved = localStorage.getItem(CART_STORAGE_KEY)
+      return saved ? JSON.parse(saved) : []
+    } catch {
+      return []
+    }
+  })
+
+  // Persistir en localStorage cada vez que cambia el carrito
+  useEffect(() => {
+    try {
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items))
+    } catch {
+      // localStorage puede fallar en modo incógnito o lleno
+    }
+  }, [items])
 
   const addItem = useCallback((supplement: Supplement, quantity = 1) => {
     setItems((prev) => {

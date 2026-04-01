@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
+import { ProtectedRoute } from "@/components/protected-route"
 import { useOrders, type Order } from "@/features/orders/hooks/useOrders"
 import {
   Package,
@@ -339,6 +340,7 @@ export default function PedidosPage() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
 
   return (
+    <ProtectedRoute>
     <div className="min-h-screen bg-muted/40">
       <Header />
 
@@ -426,5 +428,6 @@ export default function PedidosPage() {
         />
       )}
     </div>
+    </ProtectedRoute>
   )
 }

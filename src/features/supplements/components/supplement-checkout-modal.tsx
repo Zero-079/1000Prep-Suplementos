@@ -20,7 +20,7 @@ import { useAuthContext } from "@/features/auth/context/AuthContext"
 import { fetchAPI } from "@/config/api"
 import { cn, formatCOP } from "@/lib/utils"
 
-const CART_STORAGE_KEY = "supplement_cart_pending"
+const CART_STORAGE_KEY = "supplement_cart"
 
 interface SupplementCheckoutModalProps {
   open: boolean
@@ -108,9 +108,9 @@ export function SupplementCheckoutModal({ open, onOpenChange }: SupplementChecko
 
   const handleGoToLogin = useCallback(() => {
     try {
-      const cartSnapshot = items.map((i) => ({ id: i.supplement.id, quantity: i.quantity }))
-      sessionStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartSnapshot))
-    } catch { /* sessionStorage might not be available */ }
+      // Guardar carrito completo en localStorage (el provider lo restaura al montar)
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items))
+    } catch { /* localStorage might not be available */ }
     onOpenChange(false)
     router.push("/login?returnTo=/")
   }, [items, onOpenChange, router])
@@ -165,6 +165,7 @@ export function SupplementCheckoutModal({ open, onOpenChange }: SupplementChecko
 
         {step === "login-required" && !authLoading && (
           <div className="flex flex-col items-center justify-center gap-6 p-10 text-center">
+            <DialogTitle className="sr-only">Inicia sesión para continuar</DialogTitle>
             <div className="size-20 rounded-full bg-primary/10 flex items-center justify-center">
               <ShoppingCart className="size-10 text-primary" />
             </div>
@@ -205,6 +206,7 @@ export function SupplementCheckoutModal({ open, onOpenChange }: SupplementChecko
 
         {step === "success" && (
           <div className="flex flex-col items-center justify-center gap-6 p-10 text-center">
+            <DialogTitle className="sr-only">Pago completado</DialogTitle>
             <div className="size-24 rounded-full bg-primary/10 flex items-center justify-center">
               <CheckCircle2 className="size-12 text-primary" />
             </div>
@@ -224,6 +226,7 @@ export function SupplementCheckoutModal({ open, onOpenChange }: SupplementChecko
 
         {step === "cancelled" && (
           <div className="flex flex-col items-center justify-center gap-6 p-10 text-center">
+            <DialogTitle className="sr-only">Pedido cancelado</DialogTitle>
             <div className="size-24 rounded-full bg-destructive/10 flex items-center justify-center">
               <XCircle className="size-12 text-destructive" />
             </div>
