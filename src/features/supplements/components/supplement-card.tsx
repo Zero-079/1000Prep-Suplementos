@@ -2,7 +2,8 @@
 "use client"
 
 import Image from "next/image"
-import { Plus } from "lucide-react"
+import Link from "next/link"
+import { Plus, ArrowRight } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import type { Supplement } from "@/features/supplements/types/supplement"
@@ -80,17 +81,29 @@ export function SupplementCard({ supplement, onOpenDetail }: SupplementCardProps
           <span className="text-lg font-bold text-primary leading-none">
             {formatCOP(supplement.price)}
           </span>
-          <Button
-            size="sm"
-            className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 gap-1"
-            onClick={(e) => {
-              e.stopPropagation()
-              addItem(supplement)
-            }}
-          >
-            <Plus className="size-4" />
-            <span className="sr-only sm:not-sr-only">Agregar</span>
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="rounded-full text-primary hover:bg-primary/10 px-2"
+              asChild
+            >
+              <Link href={`/catalogo/${supplement.id}`}>
+                <ArrowRight className="size-4" />
+              </Link>
+            </Button>
+            <Button
+              size="sm"
+              className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 gap-1"
+              onClick={(e) => {
+                e.stopPropagation()
+                addItem(supplement)
+              }}
+            >
+              <Plus className="size-4" />
+              <span className="sr-only sm:not-sr-only">Agregar</span>
+            </Button>
+          </div>
         </div>
       </div>
     </article>

@@ -1,6 +1,6 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { DM_Sans, Playfair_Display } from "next/font/google"
+import { DM_Sans, Playfair_Display, Fraunces } from "next/font/google"
 import "./globals.css"
 import { AuthProvider } from "@/features/auth/context/AuthContext"
 import { SupplementCartProvider } from "@/features/supplements/context/supplements-cart-context"
@@ -13,6 +13,12 @@ const dmSans = DM_Sans({
 const playfairDisplay = Playfair_Display({
   subsets: ["latin"],
   variable: "--font-playfair-display",
+})
+
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  variable: "--font-fraunces",
+  axes: ["SOFT", "WONK", "opsz"],
 })
 
 export const metadata: Metadata = {
@@ -28,7 +34,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" suppressHydrationWarning data-scroll-behavior="smooth">
-      <body className={`${dmSans.variable} ${playfairDisplay.variable} font-sans antialiased`}>
+      <body className={`${dmSans.variable} ${playfairDisplay.variable} ${fraunces.variable} font-sans antialiased`}>
         <AuthProvider>
           <SupplementCartProvider>
             {children}

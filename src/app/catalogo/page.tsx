@@ -1,8 +1,7 @@
 // src/app/catalogo/page.tsx
 "use client"
 
-import { useState, Suspense, useEffect } from "react"
-import { useSearchParams } from "next/navigation"
+import { useState, Suspense } from "react"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { SupplementsFilter } from "@/features/supplements/components/supplements-filter"
@@ -16,19 +15,6 @@ export default function CatalogoPage() {
   const { supplements, isLoading, error } = useSupplements()
   const [detailSupplement, setDetailSupplement] = useState<Supplement | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
-
-  const searchParams = useSearchParams()
-  const highlightId = searchParams.get("highlight")
-
-  useEffect(() => {
-    if (highlightId && supplements.length > 0) {
-      const found = supplements.find(s => s.id === highlightId)
-      if (found) {
-        setDetailSupplement(found)
-        setDetailOpen(true)
-      }
-    }
-  }, [highlightId, supplements])
 
   useRestorePendingCart()
 

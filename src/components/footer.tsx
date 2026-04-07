@@ -1,6 +1,7 @@
 // src/components/footer.tsx
 import Link from "next/link"
 import { Mail, MapPin, Phone, Instagram, Facebook, Twitter } from "lucide-react"
+import Image from "next/image"
 
 const footerLinks = {
   servicios: [
@@ -24,10 +25,15 @@ export function Footer() {
         <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-12 lg:gap-8 mb-16">
           <div className="lg:col-span-2">
             <Link href="/" className="flex items-center gap-2 mb-6">
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-sans text-sm font-bold">1K</span>
-              </div>
-              <span className="font-serif text-xl font-semibold text-background">1000Prep</span>
+              <Image
+                src="/LOGO_1000PREP_SUPLEMENTOS3.png"
+                alt="1000Prep Logo"
+                width={120}
+                height={32}
+                priority
+                style={{ height: "auto" }}
+                className="w-32"
+              />
             </Link>
             <p className="text-background/70 leading-relaxed mb-6 max-w-sm">
               Suplementos deportivos de calidad, seleccionados por nuestros nutricionistas.

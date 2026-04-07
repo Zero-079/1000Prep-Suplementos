@@ -21,29 +21,39 @@ interface SupplementCartContextType {
   clearCart: () => void
   totalItems: number
   totalPrice: number
+  isHydrated: boolean
 }
 
 const SupplementCartContext = createContext<SupplementCartContextType | null>(null)
 
 export function SupplementCartProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<SupplementCartItem[]>(() => {
-    if (typeof window === "undefined") return []
+  // Always initialize as empty array on server to avoid hydration mismatch
+  // Will sync with localStorage after hydration
+  const [items, setItems] = useState<SupplementCartItem[]>([])
+  const [isHydrated, setIsHydrated] = useState(false)
+
+  // Sync with localStorage after hydration
+  useEffect(() => {
     try {
       const saved = localStorage.getItem(CART_STORAGE_KEY)
-      return saved ? JSON.parse(saved) : []
+      if (saved) {
+        setItems(JSON.parse(saved))
+      }
     } catch {
-      return []
+      // Ignore localStorage errors
     }
-  })
+    setIsHydrated(true)
+  }, [])
 
-  // Persistir en localStorage cada vez que cambia el carrito
+  // Persist to localStorage whenever items change (only after hydration)
   useEffect(() => {
+    if (!isHydrated) return
     try {
       localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items))
     } catch {
-      // localStorage puede fallar en modo incógnito o lleno
+      // localStorage may fail in incognito or full storage
     }
-  }, [items])
+  }, [items, isHydrated])
 
   const addItem = useCallback((supplement: Supplement, quantity = 1) => {
     setItems((prev) => {
@@ -93,6 +103,7 @@ export function SupplementCartProvider({ children }: { children: ReactNode }) {
         clearCart,
         totalItems,
         totalPrice,
+        isHydrated,
       }}
     >
       {children}

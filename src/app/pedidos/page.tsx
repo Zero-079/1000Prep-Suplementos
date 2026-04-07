@@ -1,10 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { ProtectedRoute } from "@/components/protected-route"
 import { useOrders, type Order } from "@/features/orders/hooks/useOrders"
+import { fetchAPI } from "@/config/api"
 import {
   Package,
   ChevronRight,
@@ -116,6 +117,22 @@ function OrderDetailDrawer({
   order: Order | null
   onClose: () => void
 }) {
+  const [supplementNames, setSupplementNames] = useState<Map<string, string>>(new Map())
+
+  useEffect(() => {
+    if (!order) return
+
+    const ids = order.items.map((i) => i.supplementId).filter(Boolean) as string[]
+    if (ids.length === 0) return
+
+    fetchAPI<Array<{ id: string; name: string }>>("/supplements", { method: "GET" })
+      .then((data) => {
+        const map = new Map(data.map((s) => [s.id, s.name]))
+        setSupplementNames(map)
+      })
+      .catch(() => {})
+  }, [order])
+
   if (!order) return null
 
   return (
@@ -185,7 +202,9 @@ function OrderDetailDrawer({
                       <Package className="size-4 text-primary" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-foreground">Suplemento</p>
+                      <p className="text-sm font-medium text-foreground">
+                        {item.supplementId ? (supplementNames.get(item.supplementId) ?? "Cargando…") : "Suplemento"}
+                      </p>
                       <p className="text-xs text-muted-foreground">
                         Cant. {item.quantity} · {formatCOP(item.unitPrice)} c/u
                       </p>
