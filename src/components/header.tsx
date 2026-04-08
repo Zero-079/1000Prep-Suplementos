@@ -54,6 +54,13 @@ export function Header() {
   const { totalItems, isHydrated } = useSupplementCart()
   const searchRef = useRef<HTMLDivElement>(null)
 
+  // Filtrar enlaces según el rol del usuario
+  // Ocultar "Inicio" para usuarios SELLER
+  const visibleNavLinks = navLinks.filter((link) => {
+    if (link.href === "/" && user?.role === "SELLER") return false
+    return true
+  })
+
   const handleOpenCheckout = () => {
     setCartOpen(false)
     setCheckoutOpen(true)
@@ -108,8 +115,8 @@ export function Header() {
               />
             </Link>
 
-            {/* Nav links — SIEMPRE visibles */}
-            {navLinks.map((link) => (
+            {/* Nav links — visibles según rol y solo cuando no está cargando */}
+            {!isAuthLoading && visibleNavLinks.map((link) => (
               <Link
                 key={link.label}
                 href={link.href}
@@ -205,32 +212,34 @@ export function Header() {
 
           {/* GRUPO DERECHO: Cart + Auth */}
           <div className="flex items-center gap-1.5">
-            {/* Cart */}
-            <div className="relative">
-              <button
-                className="relative p-2.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
-                aria-label={isHydrated ? `Carrito: ${totalItems} artículos` : "Carrito"}
-                onClick={() => setCartOpen(!cartOpen)}
-              >
-                <ShoppingCart className="w-[18px] h-[18px]" />
-                {isHydrated && totalItems > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 size-5 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center">
-                    {totalItems}
-                  </span>
-                )}
-              </button>
+            {/* Cart - oculto para usuarios SELLER y mientras carga auth */}
+            {!isAuthLoading && user?.role !== "SELLER" && (
+              <div className="relative">
+                <button
+                  className="relative p-2.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+                  aria-label={isHydrated ? `Carrito: ${totalItems} artículos` : "Carrito"}
+                  onClick={() => setCartOpen(!cartOpen)}
+                >
+                  <ShoppingCart className="w-[18px] h-[18px]" />
+                  {isHydrated && totalItems > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 size-5 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center">
+                      {totalItems}
+                    </span>
+                  )}
+                </button>
 
-              {cartOpen && (
-                <div className="absolute right-0 top-full mt-2 z-50 animate-in fade-in zoom-in-95 duration-200 origin-top-right">
-                  <SupplementsMiniCart
-                    variant="dropdown"
-                    isOpen={cartOpen}
-                    onOpenChange={setCartOpen}
-                    onCheckoutOpen={handleOpenCheckout}
-                  />
-                </div>
-              )}
-            </div>
+                {cartOpen && (
+                  <div className="absolute right-0 top-full mt-2 z-50 animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+                    <SupplementsMiniCart
+                      variant="dropdown"
+                      isOpen={cartOpen}
+                      onOpenChange={setCartOpen}
+                      onCheckoutOpen={handleOpenCheckout}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Auth */}
             {isAuthLoading ? (
@@ -339,7 +348,8 @@ export function Header() {
         {isOpen && (
           <div className="md:hidden py-6 px-4 border-t border-border/50">
             <div className="flex flex-col gap-1">
-              {navLinks.map((link) => (
+              {/* Nav links en mobile — solo cuando no está cargando */}
+              {!isAuthLoading && visibleNavLinks.map((link) => (
                 <Link
                   key={link.label}
                   href={link.href}
@@ -351,12 +361,15 @@ export function Header() {
               ))}
 
               <div className="mt-3 pt-3 border-t border-border/50">
-                <button
-                  onClick={() => { setIsOpen(false); setCartOpen(true); }}
-                  className="flex items-center gap-3 px-3 py-3 text-base font-medium text-foreground hover:bg-muted/60 rounded-lg transition-colors w-full"
-                >
-                  <ShoppingCart className="w-5 h-5" />Carrito {isHydrated && totalItems > 0 && `(${totalItems})`}
-                </button>
+                {/* Cart en mobile — oculto para SELLER y mientras carga auth */}
+                {!isAuthLoading && user?.role !== "SELLER" && (
+                  <button
+                    onClick={() => { setIsOpen(false); setCartOpen(true); }}
+                    className="flex items-center gap-3 px-3 py-3 text-base font-medium text-foreground hover:bg-muted/60 rounded-lg transition-colors w-full"
+                  >
+                    <ShoppingCart className="w-5 h-5" />Carrito {isHydrated && totalItems > 0 && `(${totalItems})`}
+                  </button>
+                )}
               </div>
 
               {isAuthLoading ? (

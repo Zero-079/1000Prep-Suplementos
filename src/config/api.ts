@@ -23,9 +23,13 @@ export async function fetchAPI<T>(
     : `${API_BASE_URL}${endpoint}`;
   
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
     ...options.headers,
   };
+  
+  // Solo agregar Content-Type si NO es FormData
+  if (!(options.body instanceof FormData)) {
+    headers['Content-Type'] = 'application/json';
+  }
     
   const response = await fetch(url, {
     ...options,
@@ -34,9 +38,22 @@ export async function fetchAPI<T>(
   });
   
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
+    const contentType = response.headers.get('content-type');
+    let errorData = {};
+    let errorMessage = '';
+
+    if (contentType && contentType.includes('application/json')) {
+      errorData = await response.json().catch(() => ({}));
+      errorMessage = (errorData as any)?.message || '';
+    } else {
+      // El servidor devolvió HTML (probablemente página de error)
+      const text = await response.text().catch(() => '');
+      console.error('API Error - Response is not JSON:', response.status, text.substring(0, 500));
+      errorMessage = `API error: ${response.status} ${response.statusText}`;
+    }
+
     const error = new Error(
-      errorData.message || `API error: ${response.status} ${response.statusText}`
+      errorMessage || `API error: ${response.status} ${response.statusText}`
     );
     (error as any).status = response.status;
     (error as any).data = errorData;

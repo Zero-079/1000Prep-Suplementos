@@ -4,7 +4,14 @@
 import { useState, useMemo } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { FlaskConical, X } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { SupplementCard } from "./supplement-card"
+import { AddSupplementButton } from "./add-supplement-button"
+import { CreateSupplementModal } from "./create-supplement-modal"
+import { EditSupplementModal } from "./edit-supplement-modal"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
+import { useAuth } from "@/features/auth/hooks/useAuth"
+import { supplementsService } from "@/features/supplements/services/supplements.service"
 import type { Supplement, SupplementCategoryFilter } from "@/features/supplements/types/supplement"
 import { cn } from "@/lib/utils"
 
@@ -57,6 +64,15 @@ export function SupplementsFilter({
 }: SupplementsFilterProps) {
   const searchParams = useSearchParams()
   const router = useRouter()
+  const { user } = useAuth()
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  
+  // Estados para modales de editar/eliminar
+  const [editingSupplement, setEditingSupplement] = useState<Supplement | null>(null)
+  const [deletingSupplement, setDeletingSupplement] = useState<Supplement | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  
   const categoryParam = searchParams.get("category") as SupplementCategoryFilter | null
   const searchParam = searchParams.get("search")
   const initialFilter: SupplementCategoryFilter =
@@ -88,6 +104,37 @@ export function SupplementsFilter({
     return result
   }, [supplements, activeFilter, searchParam])
 
+  // Handlers para editar/eliminar
+  const handleEdit = (supplement: Supplement) => {
+    setEditingSupplement(supplement)
+    setIsEditModalOpen(true)
+  }
+
+  const handleDeleteClick = (supplement: Supplement) => {
+    setDeletingSupplement(supplement)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!deletingSupplement) return
+    
+    setIsDeleting(true)
+    try {
+      await supplementsService.deleteSupplement(deletingSupplement.id)
+      setDeletingSupplement(null)
+      // Opcional: callback para recargar
+    } catch (error) {
+      console.error("Error deleting supplement:", error)
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  const handleModalSuccess = () => {
+    setEditingSupplement(null)
+    setIsModalOpen(false)
+    // Aquí podrías recargar los suplementos si es necesario
+  }
+
   return (
     <div className="bg-card rounded-3xl border border-border shadow-md overflow-hidden">
       <div className="px-6 pt-6 pb-4 md:px-8 md:pt-8 md:pb-5 flex flex-col gap-5">
@@ -105,23 +152,72 @@ export function SupplementsFilter({
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          {FILTER_OPTIONS.map((filter) => (
-            <button
-              key={filter.value}
-              onClick={() => setActiveFilter(filter.value)}
-              className={cn(
-                "px-4 py-2 rounded-full text-sm font-medium transition-colors border",
-                activeFilter === filter.value
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-background text-muted-foreground border-border hover:bg-muted hover:text-foreground"
-              )}
-            >
-              {filter.label}
-            </button>
-          ))}
+        <div className="flex flex-wrap gap-2 items-center justify-between">
+          <div className="flex flex-wrap gap-2">
+            {FILTER_OPTIONS.map((filter) => (
+              <button
+                key={filter.value}
+                onClick={() => setActiveFilter(filter.value)}
+                className={cn(
+                  "px-4 py-2 rounded-full text-sm font-medium transition-colors border",
+                  activeFilter === filter.value
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-background text-muted-foreground border-border hover:bg-muted hover:text-foreground"
+                )}
+              >
+                {filter.label}
+              </button>
+            ))}
+          </div>
+          {user?.role === "SELLER" && <AddSupplementButton onClick={() => setIsModalOpen(true)} />}
         </div>
       </div>
+
+      <CreateSupplementModal
+        open={isModalOpen}
+        onOpenChange={(open) => {
+          setIsModalOpen(open)
+          if (!open) setEditingSupplement(null)
+        }}
+        onSuccess={handleModalSuccess}
+        editingSupplement={editingSupplement}
+      />
+
+      <EditSupplementModal
+        open={isEditModalOpen}
+        onOpenChange={(open) => {
+          setIsEditModalOpen(open)
+          if (!open) setEditingSupplement(null)
+        }}
+        supplement={editingSupplement}
+        onSuccess={() => {
+          setEditingSupplement(null)
+          setIsEditModalOpen(false)
+        }}
+      />
+
+      {/* Alert Dialog para confirmar eliminación */}
+      <AlertDialog open={!!deletingSupplement} onOpenChange={(open) => !open && setDeletingSupplement(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar suplemento?</AlertDialogTitle>
+          </AlertDialogHeader>
+          <p className="text-muted-foreground">
+            ¿Estás seguro de que deseas eliminar <strong className="text-foreground">{deletingSupplement?.name}</strong>? 
+            Esta acción no se puede deshacer.
+          </p>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Eliminando..." : "Eliminar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <div className="px-6 pb-6 md:px-8 md:pb-8">
         {searchParam && (
@@ -171,7 +267,14 @@ export function SupplementsFilter({
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {filtered.map((s) => (
-              <SupplementCard key={s.id} supplement={s} onOpenDetail={onOpenDetail} />
+              <SupplementCard 
+                key={s.id} 
+                supplement={s} 
+                onOpenDetail={onOpenDetail}
+                isSeller={user?.role === "SELLER"}
+                onEdit={handleEdit}
+                onDelete={handleDeleteClick}
+              />
             ))}
           </div>
         )}

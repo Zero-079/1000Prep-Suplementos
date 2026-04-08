@@ -25,7 +25,8 @@ export function useAuth() {
       const response = await authService.login(data);
       setIsAuthenticated(true);
       setUser(response.user);
-      router.push('/');
+      const destination = response.user.role === 'SELLER' ? '/catalogo' : '/';
+      router.push(destination);
     } catch (err: any) {
       const message = err.data?.message || err.message || 'Error al iniciar sesión';
       setError(message);

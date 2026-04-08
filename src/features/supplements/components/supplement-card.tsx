@@ -3,7 +3,7 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { Plus, ArrowRight } from "lucide-react"
+import { Plus, ArrowRight, Pencil, Trash2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import type { Supplement } from "@/features/supplements/types/supplement"
@@ -13,6 +13,9 @@ import { formatCOP } from "@/lib/utils"
 interface SupplementCardProps {
   supplement: Supplement
   onOpenDetail: (supplement: Supplement) => void
+  isSeller?: boolean
+  onEdit?: (supplement: Supplement) => void
+  onDelete?: (supplement: Supplement) => void
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -25,8 +28,24 @@ const CATEGORY_LABELS: Record<string, string> = {
   OTHER: "Otros",
 }
 
-export function SupplementCard({ supplement, onOpenDetail }: SupplementCardProps) {
+export function SupplementCard({ 
+  supplement, 
+  onOpenDetail, 
+  isSeller = false, 
+  onEdit, 
+  onDelete 
+}: SupplementCardProps) {
   const { addItem } = useSupplementCart()
+
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    onEdit?.(supplement)
+  }
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    onDelete?.(supplement)
+  }
 
   const firstImage = supplement.images?.[0]?.url ?? null
   const categoryLabel = CATEGORY_LABELS[supplement.category] ?? supplement.category
@@ -78,32 +97,57 @@ export function SupplementCard({ supplement, onOpenDetail }: SupplementCardProps
         )}
 
         <div className="flex items-center justify-between pt-2 border-t border-border/50 mt-auto">
-          <span className="text-lg font-bold text-primary leading-none">
-            {formatCOP(supplement.price)}
-          </span>
-          <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="rounded-full text-primary hover:bg-primary/10 px-2"
-              asChild
-            >
-              <Link href={`/catalogo/${supplement.id}`}>
-                <ArrowRight className="size-4" />
-              </Link>
-            </Button>
-            <Button
-              size="sm"
-              className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 gap-1"
-              onClick={(e) => {
-                e.stopPropagation()
-                addItem(supplement)
-              }}
-            >
-              <Plus className="size-4" />
-              <span className="sr-only sm:not-sr-only">Agregar</span>
-            </Button>
-          </div>
+          {isSeller ? (
+            <div className="flex items-center gap-1">
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-full border-primary/30 text-primary hover:bg-primary/10 hover:border-primary"
+                onClick={handleEdit}
+              >
+                <Pencil className="size-4" />
+                <span className="sr-only sm:not-sr-only">Editar</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-full border-destructive/30 text-destructive hover:bg-destructive/10 hover:border-destructive"
+                onClick={handleDelete}
+              >
+                <Trash2 className="size-4" />
+                <span className="sr-only sm:not-sr-only">Eliminar</span>
+              </Button>
+            </div>
+          ) : (
+            <>
+              <span className="text-lg font-bold text-primary leading-none">
+                {formatCOP(supplement.price)}
+              </span>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="rounded-full text-primary hover:bg-primary/10 px-2"
+                  asChild
+                >
+                  <Link href={`/catalogo/${supplement.id}`}>
+                    <ArrowRight className="size-4" />
+                  </Link>
+                </Button>
+                <Button
+                  size="sm"
+                  className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 gap-1"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    addItem(supplement)
+                  }}
+                >
+                  <Plus className="size-4" />
+                  <span className="sr-only sm:not-sr-only">Agregar</span>
+                </Button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </article>
