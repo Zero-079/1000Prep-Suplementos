@@ -475,11 +475,20 @@ export function CreateSupplementModal({
         }
       } else {
         // Crear nuevo supplement
+        console.log("[handleSubmit] Creando supplement sin imagen inicial...")
         const created = await supplementsService.createSupplement(createData)
+        console.log("[handleSubmit] Supplement creado:", created.id)
 
         // Subir imagen si existe
         if (imageFile && created.id) {
-          await supplementsService.uploadImage(created.id, imageFile, 0)
+          console.log("[handleSubmit] Subiendo imagen:", imageFile.name)
+          try {
+            await supplementsService.uploadImage(created.id, imageFile, 0)
+            console.log("[handleSubmit] Imagen subida exitosamente")
+          } catch (imgError) {
+            console.error("[handleSubmit] Error al subir imagen:", imgError)
+            // No lanzar error - el supplement ya fue creado
+          }
         }
       }
 

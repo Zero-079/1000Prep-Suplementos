@@ -30,35 +30,42 @@ export async function fetchAPI<T>(
   if (!(options.body instanceof FormData)) {
     headers['Content-Type'] = 'application/json';
   }
-    
+
+  console.log(`[fetchAPI] ${options.method || 'GET'} ${url}`)
+  if (options.body instanceof FormData) {
+    console.log(`[fetchAPI] FormData:`, Array.from(options.body.entries()).map(([k, v]) => [k, v instanceof File ? { name: v.name, size: v.size, type: v.type } : v]))
+  }
+     
   const response = await fetch(url, {
     ...options,
     headers,
     credentials: 'include',
   });
-  
+    
   if (!response.ok) {
-    const contentType = response.headers.get('content-type');
-    let errorData = {};
-    let errorMessage = '';
-
-    if (contentType && contentType.includes('application/json')) {
-      errorData = await response.json().catch(() => ({}));
-      errorMessage = (errorData as any)?.message || '';
-    } else {
-      // El servidor devolvió HTML (probablemente página de error)
-      const text = await response.text().catch(() => '');
-      console.error('API Error - Response is not JSON:', response.status, text.substring(0, 500));
-      errorMessage = `API error: ${response.status} ${response.statusText}`;
-    }
-
-    const error = new Error(
-      errorMessage || `API error: ${response.status} ${response.statusText}`
-    );
+    // Intentar leer el cuerpo del error
+    let errorDetail = ''
+    try {
+      const errorText = await response.text()
+      errorDetail = errorText
+      console.log(`[fetchAPI] Error body:`, errorText)
+    } catch (e) {}
+    
+    const errorMessage = errorDetail ? `API error: ${response.status} - ${errorDetail}` : `API error: ${response.status} ${response.statusText}`;
+    const error = new Error(errorMessage);
     (error as any).status = response.status;
-    (error as any).data = errorData;
     throw error;
   }
   
-  return response.json();
+  // Try to parse JSON, but handle cases where response might not be valid JSON
+  try {
+    const text = await response.text();
+    if (!text) {
+      return {} as T;
+    }
+    return JSON.parse(text) as T;
+  } catch (e) {
+    // If parsing fails, return empty object
+    return {} as T;
+  }
 }

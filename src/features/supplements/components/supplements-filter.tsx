@@ -36,6 +36,7 @@ interface SupplementsFilterProps {
   isLoading: boolean
   error: string | null
   onOpenDetail: (supplement: Supplement) => void
+  refetch?: () => Promise<void>
 }
 
 function SkeletonCard() {
@@ -61,6 +62,7 @@ export function SupplementsFilter({
   isLoading,
   error,
   onOpenDetail,
+  refetch,
 }: SupplementsFilterProps) {
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -121,7 +123,8 @@ export function SupplementsFilter({
     try {
       await supplementsService.deleteSupplement(deletingSupplement.id)
       setDeletingSupplement(null)
-      // Opcional: callback para recargar
+      // Recargar la lista
+      refetch?.()
     } catch (error) {
       console.error("Error deleting supplement:", error)
     } finally {
@@ -132,7 +135,8 @@ export function SupplementsFilter({
   const handleModalSuccess = () => {
     setEditingSupplement(null)
     setIsModalOpen(false)
-    // Aquí podrías recargar los suplementos si es necesario
+    // Recargar la lista
+    refetch?.()
   }
 
   return (
@@ -190,9 +194,11 @@ export function SupplementsFilter({
           if (!open) setEditingSupplement(null)
         }}
         supplement={editingSupplement}
+        supplements={supplements}
         onSuccess={() => {
           setEditingSupplement(null)
           setIsEditModalOpen(false)
+          refetch?.()
         }}
       />
 
@@ -211,7 +217,7 @@ export function SupplementsFilter({
             <AlertDialogAction
               onClick={handleDeleteConfirm}
               disabled={isDeleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-destructive/20 text-destructive hover:bg-destructive/30"
             >
               {isDeleting ? "Eliminando..." : "Eliminar"}
             </AlertDialogAction>

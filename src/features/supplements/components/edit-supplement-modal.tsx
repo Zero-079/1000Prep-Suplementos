@@ -21,6 +21,7 @@ interface EditSupplementModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   supplement: Supplement
+  supplements?: Supplement[]
   onSuccess?: () => void
 }
 
@@ -49,13 +50,6 @@ interface FormData {
   servingSize: string
   // Opcionales
   usageInstructions: string
-  nutrition: {
-    servingsPerContainer: string
-    calories: string
-    protein: string
-    carbs: string
-    fat: string
-  }
 }
 
 const initialFormData: FormData = {
@@ -68,13 +62,6 @@ const initialFormData: FormData = {
   stock: "",
   servingSize: "",
   usageInstructions: "",
-  nutrition: {
-    servingsPerContainer: "",
-    calories: "",
-    protein: "",
-    carbs: "",
-    fat: "",
-  },
 }
 
 // Custom Select Component
@@ -238,6 +225,7 @@ export function EditSupplementModal({
   open,
   onOpenChange,
   supplement,
+  supplements,
   onSuccess,
 }: EditSupplementModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -277,34 +265,30 @@ export function EditSupplementModal({
       loadBrands()
 
       // Cargar datos del supplement (convertir valores numéricos a string)
+      // Usar la versión más actualizada del supplement (de la lista recibida) si está disponible
+      const currentSupplement = supplements?.find(s => s.id === supplement.id) || supplement
+      
       setFormData({
-        brandId: supplement.brand?.id || supplement.brandId || "",
-        name: supplement.name || "",
-        description: supplement.description || "",
-        category: supplement.category || "PROTEIN",
-        price: supplement.price?.toString() || "",
-        subscriberPrice: supplement.subscriberPrice?.toString() || "",
-        stock: supplement.stock?.toString() || "",
-        servingSize: supplement.servingSize || "",
-        usageInstructions: supplement.usageInstructions || "",
-        nutrition: {
-          servingsPerContainer: supplement.nutrition?.servingsPerContainer?.toString() || "",
-          calories: supplement.nutrition?.calories?.toString() || "",
-          protein: supplement.nutrition?.protein?.toString() || "",
-          carbs: supplement.nutrition?.carbs?.toString() || "",
-          fat: supplement.nutrition?.fat?.toString() || "",
-        },
+        brandId: currentSupplement.brand.id,
+        name: currentSupplement.name || "",
+        description: currentSupplement.description || "",
+        category: currentSupplement.category || "PROTEIN",
+        price: currentSupplement.price?.toString() || "",
+        subscriberPrice: currentSupplement.subscriberPrice?.toString() || "",
+        stock: currentSupplement.stock?.toString() || "",
+        servingSize: currentSupplement.servingSize || "",
+        usageInstructions: currentSupplement.usageInstructions || "",
       })
 
-      // Cargar imagen existente si hay
-      if (supplement.images && supplement.images.length > 0) {
-        setExistingImageUrl(supplement.images[0].url)
+      // Cargar imagen existente - mostrar la última (más reciente)
+      if (currentSupplement.images && currentSupplement.images.length > 0) {
+        setExistingImageUrl(currentSupplement.images[currentSupplement.images.length - 1].url)
       } else {
         setExistingImageUrl(null)
       }
       setImagePreview(null)
     }
-  }, [open, supplement])
+  }, [open, supplement, supplements])
 
   const handleInputChange = (
     field: keyof FormData,
@@ -318,16 +302,6 @@ export function EditSupplementModal({
         return newErrors
       })
     }
-  }
-
-  const handleNutritionChange = (
-    field: keyof FormData["nutrition"],
-    value: string
-  ) => {
-    setFormData((prev) => ({
-      ...prev,
-      nutrition: { ...prev.nutrition, [field]: value },
-    }))
   }
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -444,8 +418,9 @@ export function EditSupplementModal({
 
     setIsSubmitting(true)
     try {
-      // Actualizar el supplement
-      const updateData: Partial<CreateSupplementDto> = {
+      // Actualizar el supplement - sin images (se maneja por separado via uploadImage)
+      // NOTA: nutrition no es editable desde el backend actualmente
+      const updateData = {
         brandId: formData.brandId,
         name: formData.name.trim(),
         description: formData.description.trim(),
@@ -455,25 +430,23 @@ export function EditSupplementModal({
         stock: parseInt(formData.stock),
         servingSize: formData.servingSize.trim(),
         usageInstructions: formData.usageInstructions.trim() || "",
-        images: [], // Las imágenes se manejan por separado
-        nutrition: {
-          servingsPerContainer: parseInt(formData.nutrition.servingsPerContainer) || 0,
-          calories: parseInt(formData.nutrition.calories) || 0,
-          protein: parseInt(formData.nutrition.protein) || 0,
-          carbs: parseInt(formData.nutrition.carbs) || 0,
-          fat: parseInt(formData.nutrition.fat) || 0,
-        },
       }
 
       console.log("Datos a actualizar:", JSON.stringify(updateData, null, 2))
 
       const updated = await supplementsService.updateSupplement(supplement.id, updateData)
+      console.log("[handleSubmit] Supplement actualizado:", updated.id)
 
-      // Subir nueva imagen si existe
+      // Subir nueva imagen si existe (sin order para que el backend calcule automáticamente)
       if (imageFile && updated.id) {
-        // Si hay imagen existente, reemplazamos la primera (índice 0)
-        const imageIndex = existingImageUrl !== null ? 0 : 0
-        await supplementsService.uploadImage(updated.id, imageFile, imageIndex)
+        console.log("[handleSubmit] Subiendo imagen:", imageFile.name)
+        try {
+          await supplementsService.uploadImage(updated.id, imageFile)
+          console.log("[handleSubmit] Imagen subida exitosamente")
+        } catch (imgError) {
+          console.error("[handleSubmit] Error al subir imagen:", imgError)
+          // No lanzar error - el supplement ya fue actualizado
+        }
       }
 
       handleClose()
@@ -703,78 +676,6 @@ export function EditSupplementModal({
               placeholder="Instrucciones de uso, precauciones, etc."
               rows={2}
             />
-
-            {/* Nutrición */}
-            <div className="grid gap-3">
-              <Label>Nutrición (por porción)</Label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                <div className="grid gap-1">
-                  <Label htmlFor="servingsPerContainer" className="text-xs text-muted-foreground">
-                    Porciones/envase
-                  </Label>
-                  <Input
-                    id="servingsPerContainer"
-                    type="number"
-                    placeholder="0"
-                    min="0"
-                    value={formData.nutrition.servingsPerContainer}
-                    onChange={(e) => handleNutritionChange("servingsPerContainer", e.target.value)}
-                  />
-                </div>
-                <div className="grid gap-1">
-                  <Label htmlFor="calories" className="text-xs text-muted-foreground">
-                    Calorías
-                  </Label>
-                  <Input
-                    id="calories"
-                    type="number"
-                    placeholder="0"
-                    min="0"
-                    value={formData.nutrition.calories}
-                    onChange={(e) => handleNutritionChange("calories", e.target.value)}
-                  />
-                </div>
-                <div className="grid gap-1">
-                  <Label htmlFor="protein" className="text-xs text-muted-foreground">
-                    Proteínas (g)
-                  </Label>
-                  <Input
-                    id="protein"
-                    type="number"
-                    placeholder="0"
-                    min="0"
-                    value={formData.nutrition.protein}
-                    onChange={(e) => handleNutritionChange("protein", e.target.value)}
-                  />
-                </div>
-                <div className="grid gap-1">
-                  <Label htmlFor="carbs" className="text-xs text-muted-foreground">
-                    Carbohidratos (g)
-                  </Label>
-                  <Input
-                    id="carbs"
-                    type="number"
-                    placeholder="0"
-                    min="0"
-                    value={formData.nutrition.carbs}
-                    onChange={(e) => handleNutritionChange("carbs", e.target.value)}
-                  />
-                </div>
-                <div className="grid gap-1">
-                  <Label htmlFor="fat" className="text-xs text-muted-foreground">
-                    Grasas (g)
-                  </Label>
-                  <Input
-                    id="fat"
-                    type="number"
-                    placeholder="0"
-                    min="0"
-                    value={formData.nutrition.fat}
-                    onChange={(e) => handleNutritionChange("fat", e.target.value)}
-                  />
-                </div>
-              </div>
-            </div>
           </SectionCard>
 
           {/* Sección: Imagen del Producto */}

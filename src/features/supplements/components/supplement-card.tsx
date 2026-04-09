@@ -47,7 +47,10 @@ export function SupplementCard({
     onDelete?.(supplement)
   }
 
-  const firstImage = supplement.images?.[0]?.url ?? null
+  // Mostrar la última imagen agregada (más reciente)
+  const lastImage = supplement.images?.length 
+    ? supplement.images[supplement.images.length - 1]?.url 
+    : null
   const categoryLabel = CATEGORY_LABELS[supplement.category] ?? supplement.category
 
   return (
@@ -56,9 +59,9 @@ export function SupplementCard({
       onClick={() => onOpenDetail(supplement)}
     >
       <div className="relative aspect-square overflow-hidden bg-white">
-        {firstImage ? (
+        {lastImage ? (
           <Image
-            src={firstImage}
+            src={lastImage}
             alt={supplement.name}
             fill
             className="object-contain p-4 transition-transform duration-500 group-hover:scale-105"

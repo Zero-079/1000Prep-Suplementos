@@ -12,7 +12,7 @@ import { useRestorePendingCart } from "@/features/supplements/hooks/useRestorePe
 import type { Supplement } from "@/features/supplements/types/supplement"
 
 export default function CatalogoPage() {
-  const { supplements, isLoading, error } = useSupplements()
+  const { supplements, isLoading, error, refetch } = useSupplements()
   const [detailSupplement, setDetailSupplement] = useState<Supplement | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
 
@@ -48,6 +48,7 @@ export default function CatalogoPage() {
               isLoading={isLoading}
               error={error}
               onOpenDetail={openDetail}
+              refetch={refetch}
             />
           </Suspense>
           <SupplementsInfoStrip />

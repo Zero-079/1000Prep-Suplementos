@@ -151,19 +151,35 @@ class SupplementsService {
     }
   }
 
-  async uploadImage(supplementId: string, file: File, index: number = 0): Promise<string> {
+  async uploadImage(supplementId: string, file: File, order?: number): Promise<string> {
     try {
+      console.log(`[uploadImage] Subiendo imagen para supplement ${supplementId}, order: ${order}, file: ${file.name}, size: ${file.size}, type: ${file.type}`)
+      
       const formData = new FormData()
       formData.append("file", file)
-      formData.append("index", index.toString())
+      // Enviar order solo si está definido
+      if (order !== undefined) {
+        formData.append("order", order.toString())
+      }
+
+      console.log(`[uploadImage] FormData preparado, keys:`, Array.from(formData.keys()))
 
       const result = await fetchAPI<{ url: string }>(`/supplements/${supplementId}/images`, {
         method: "POST",
         body: formData,
       })
+      
+      console.log(`[uploadImage] Respuesta:`, result)
       return result.url
     } catch (error) {
-      console.error("Error uploading image:", error)
+      console.error("[uploadImage] Error al subir imagen:", error)
+      const status = (error as any)?.status
+      if (status === 400) {
+        console.error("[uploadImage] Bad Request - ya existe imagen en ese orden")
+      }
+      if (status === 404) {
+        console.error("[uploadImage] El endpoint no existe")
+      }
       throw error
     }
   }
