@@ -77,7 +77,7 @@ const initialFormData: FormData = {
   },
 }
 
-// Custom Select Component
+// Custom Select Component with Type-to-Search
 function CustomSelect({
   value,
   onChange,
@@ -96,19 +96,92 @@ function CustomSelect({
   required?: boolean
 }) {
   const [isOpen, setIsOpen] = useState(false)
+  const [searchBuffer, setSearchBuffer] = useState("")
   const selectRef = useRef<HTMLDivElement>(null)
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Limpiar timer cuando el componente se desmonta
+  useEffect(() => {
+    return () => {
+      if (searchTimerRef.current) {
+        clearTimeout(searchTimerRef.current)
+      }
+    }
+  }, [])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (selectRef.current && !selectRef.current.contains(event.target as Node)) {
         setIsOpen(false)
+        setSearchBuffer("")
       }
     }
     document.addEventListener("mousedown", handleClickOutside)
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
+  // Capturar teclas globalmente cuando el dropdown está abierto
+  useEffect(() => {
+    if (!isOpen) return
+
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+// Manejar single keys para búsqueda rápida
+      if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        e.preventDefault()
+        handleKeyPress(e.key)
+      } else if (e.key === "Escape") {
+        setIsOpen(false)
+        setSearchBuffer("")
+      }
+    }
+
+    document.addEventListener("keydown", handleGlobalKeyDown)
+    return () => document.removeEventListener("keydown", handleGlobalKeyDown)
+  }, [isOpen, options, searchBuffer])
+
   const selectedOption = options.find((opt) => opt.value === value)
+
+  // Función de búsqueda rápida: encontrar primera opción que empiece con el buffer
+  const findFirstMatch = (searchText: string): { value: string; label: string } | undefined => {
+    const lowerSearch = searchText.toLowerCase()
+    return options.find((opt) => opt.label.toLowerCase().startsWith(lowerSearch))
+  }
+
+  // Manejar keypress para búsqueda rápida
+  const handleKeyPress = (key: string) => {
+    if (!isOpen) return
+
+    // Limpiar timer anterior
+    if (searchTimerRef.current) {
+      clearTimeout(searchTimerRef.current)
+    }
+
+    // Agregar karakter al buffer (acumular)
+    const newBuffer = searchBuffer + key
+    setSearchBuffer(newBuffer)
+
+    // NO seleccionar inmediatamente - esperar a que expire el timer
+    // El timer ejecutará la selección después de 500ms de inactividad
+
+    // Configurar timer para buscar después de 500ms
+    searchTimerRef.current = setTimeout(() => {
+      const match = findFirstMatch(newBuffer)
+      if (match) {
+        // Limpiar highlight anterior
+        document.querySelectorAll(".bg-primary\\/20").forEach(el => el.classList.remove("bg-primary/20"))
+        
+        // NO seleccionar - solo hacer scroll hasta la opción
+        const optionElement = document.getElementById(`option-${match.value}`)
+        if (optionElement) {
+          optionElement.scrollIntoView({ block: "center", behavior: "smooth" })
+          // Resaltar visualmente la opción (sin seleccionar)
+          optionElement.classList.add("bg-primary/20")
+        }
+        // Dejar el dropdown ABIERTO para que el usuario elija
+      }
+      setSearchBuffer("")
+    }, 500)
+  }
 
   return (
     <div className="grid gap-2">
@@ -137,14 +210,29 @@ function CustomSelect({
           />
         </button>
         {isOpen && (
-          <div className="absolute z-50 w-full mt-1 py-1 bg-popover border border-border rounded-md shadow-lg max-h-60 overflow-auto animate-in fade-in zoom-in-95 duration-100">
+          <div
+            className="absolute z-50 w-full mt-1 py-1 bg-popover border border-border rounded-md shadow-lg max-h-60 overflow-auto animate-in fade-in zoom-in-95 duration-100"
+            onKeyDown={(e) => {
+              // Manejar single keys para búsqueda rápida
+              if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+                e.preventDefault()
+                handleKeyPress(e.key)
+              } else if (e.key === "Escape") {
+                setIsOpen(false)
+                setSearchBuffer("")
+              }
+            }}
+            tabIndex={0}
+          >
             {options.map((option) => (
               <button
                 key={option.value}
+                id={`option-${option.value}`}
                 type="button"
                 onClick={() => {
                   onChange(option.value)
                   setIsOpen(false)
+                  setSearchBuffer("")
                 }}
                 className={`w-full px-3 py-2 text-left text-sm hover:bg-muted transition-colors ${
                   option.value === value ? "bg-primary/10 text-primary font-medium" : "text-foreground"
@@ -376,7 +464,7 @@ export function CreateSupplementModal({
     })
 
     try {
-      const newBrand = await supplementsService.createBrand({ name: newBrandName.trim() })
+      const newBrand = await supplementsService.createBrand({ name: newBrandName.trim(), logoUrl: "" })
 
       // Agregar la nueva marca a la lista (antes de la opción "Crear nueva marca")
       setBrands((prev) => [
