@@ -2,7 +2,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { fetchAPI } from "@/config/api"
+import axiosInstance from "@/lib/axios"
 import { useAuthContext } from "@/features/auth/context/AuthContext"
 
 export interface UserAddress {
@@ -38,10 +38,8 @@ export function useUserAddresses(): UseUserAddressesReturn {
     setIsLoading(true)
     setError(null)
     try {
-      const data = await fetchAPI<UserAddress[]>("/users/me/addresses", {
-        method: "GET",
-      })
-      setAddresses(data)
+      const response = await axiosInstance.get<UserAddress[]>("/users/me/addresses")
+      setAddresses(response.data)
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Error al cargar direcciones"

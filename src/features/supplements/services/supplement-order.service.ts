@@ -1,6 +1,6 @@
 // src/features/supplements/services/supplement-order.service.ts
 
-import { fetchAPI } from "@/config/api"
+import axiosInstance from '@/lib/axios'
 
 export interface SupplementOrderItem {
   supplementId: string
@@ -25,13 +25,9 @@ export interface SupplementOrderResponse {
 }
 
 class SupplementOrderService {
-  async createOrder(
-    payload: CreateSupplementOrderPayload
-  ): Promise<SupplementOrderResponse> {
-    return fetchAPI<SupplementOrderResponse>("/orders/supplement", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    })
+  async createOrder(payload: CreateSupplementOrderPayload): Promise<SupplementOrderResponse> {
+    const response = await axiosInstance.post<SupplementOrderResponse>('/orders/supplement', payload)
+    return response.data
   }
 }
 

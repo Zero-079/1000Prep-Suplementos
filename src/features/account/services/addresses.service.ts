@@ -1,5 +1,5 @@
 // src/features/account/services/addresses.service.ts
-import { fetchAPI } from "@/config/api"
+import axiosInstance from '@/lib/axios'
 
 export interface AddressPayload {
   label: string
@@ -20,28 +20,21 @@ export interface AddressResponse {
 
 export const addressesService = {
   async getAll(): Promise<AddressResponse[]> {
-    return fetchAPI<AddressResponse[]>("/users/me/addresses", {
-      method: "GET",
-    })
+    const response = await axiosInstance.get<AddressResponse[]>('/users/me/addresses')
+    return response.data
   },
 
   async create(data: AddressPayload): Promise<AddressResponse> {
-    return fetchAPI<AddressResponse>("/users/me/addresses", {
-      method: "POST",
-      body: JSON.stringify(data),
-    })
+    const response = await axiosInstance.post<AddressResponse>('/users/me/addresses', data)
+    return response.data
   },
 
   async update(id: string, data: Partial<AddressPayload>): Promise<AddressResponse> {
-    return fetchAPI<AddressResponse>(`/users/me/addresses/${id}`, {
-      method: "PATCH",
-      body: JSON.stringify(data),
-    })
+    const response = await axiosInstance.patch<AddressResponse>(`/users/me/addresses/${id}`, data)
+    return response.data
   },
 
   async remove(id: string): Promise<void> {
-    return fetchAPI<void>(`/users/me/addresses/${id}`, {
-      method: "DELETE",
-    })
+    await axiosInstance.delete(`/users/me/addresses/${id}`)
   },
 }

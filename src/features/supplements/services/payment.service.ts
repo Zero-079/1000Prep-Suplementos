@@ -1,6 +1,6 @@
 // src/features/supplements/services/payment.service.ts
 
-import { fetchAPI } from "@/config/api"
+import axiosInstance from '@/lib/axios'
 
 export interface InitPaymentResponse {
   paymentId: string
@@ -10,9 +10,8 @@ export interface InitPaymentResponse {
 
 class PaymentService {
   async initPayment(orderId: string): Promise<InitPaymentResponse> {
-    return fetchAPI<InitPaymentResponse>(`/payments/init/${orderId}`, {
-      method: "POST",
-    })
+    const response = await axiosInstance.post<InitPaymentResponse>(`/payments/init/${orderId}`)
+    return response.data
   }
 }
 

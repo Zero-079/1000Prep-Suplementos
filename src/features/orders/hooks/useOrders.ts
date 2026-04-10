@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { fetchAPI } from "@/config/api"
+import axiosInstance from "@/lib/axios"
 
 export interface OrderAddress {
   id: string
@@ -67,8 +67,8 @@ export function useOrders(): UseOrdersReturn {
     setIsLoading(true)
     setError(null)
     try {
-      const data = await fetchAPI<Order[]>("/orders")
-      setOrders(data.filter((o) => o.orderType === "SUPPLEMENT"))
+      const response = await axiosInstance.get<Order[]>("/orders")
+      setOrders(response.data.filter((o) => o.orderType === "SUPPLEMENT"))
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al cargar los pedidos")
     } finally {

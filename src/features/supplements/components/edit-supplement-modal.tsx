@@ -20,7 +20,7 @@ import type { Supplement, SupplementCategory } from "../types/supplement"
 interface EditSupplementModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  supplement: Supplement
+  supplement: Supplement | null
   supplements?: Supplement[]
   onSuccess?: () => void
 }
@@ -502,6 +502,7 @@ export function EditSupplementModal({
   }
 
   const handleSubmit = async () => {
+    if (!supplement) return
     if (!validateForm()) return
 
     setIsSubmitting(true)

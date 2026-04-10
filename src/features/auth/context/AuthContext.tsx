@@ -2,7 +2,7 @@
 'use client';
 
 import { createContext, useContext, ReactNode, useEffect, useState } from 'react';
-import { fetchAPI } from '@/config/api';
+import axiosInstance from '@/lib/axios';
 
 interface User {
   id: string;
@@ -30,12 +30,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const checkSession = async () => {
       try {
-        const data = await fetchAPI<{ user: User }>('/auth/me', {
-          method: 'GET',
-        });
+        const response = await axiosInstance.get<{ user: User }>('/auth/me');
 
-        if (data && data.user) {
-          setUser(data.user);
+        if (response.data && response.data.user) {
+          setUser(response.data.user);
           setIsAuthenticated(true);
         } else {
           setUser(null);
