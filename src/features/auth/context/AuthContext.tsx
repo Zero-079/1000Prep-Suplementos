@@ -1,8 +1,9 @@
 // src/features/auth/context/AuthContext.tsx
 'use client';
 
-import { createContext, useContext, ReactNode, useEffect, useState } from 'react';
-import axiosInstance from '@/lib/axios';
+import { createContext, useContext, ReactNode, useState } from 'react';
+import useSWR from 'swr';
+import { axiosFetcher } from '@/lib/use-swr';
 
 interface User {
   id: string;
@@ -18,37 +19,40 @@ interface AuthContextType {
   isAuthenticated: boolean;
   setUser: (user: User | null) => void;
   setIsAuthenticated: (value: boolean) => void;
+  mutate: () => Promise<{ user: User } | undefined>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+/**
+ * AuthProvider con SWR
+ * - Deduplica requests automáticamente con otros componentes
+ * - Cachea la sesión en memoria
+ * - Usa estado local para permitir transición de loading a no-loading
+ */
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [hasCheckedSession, setHasCheckedSession] = useState(false)
+  
+  const { data, isLoading: swrLoading, mutate } = useSWR<{ user: User }>(
+    '/auth/me',
+    (key) => axiosFetcher(key),
+    {
+      revalidateOnFocus: true,
+      revalidateOnReconnect: true,
+      dedupingInterval: 5000,
+      fallbackData: undefined,
+      // onSuccess se ejecuta cuando hay usuario autenticado
+      onSuccess: () => setHasCheckedSession(true),
+      // onError se ejecuta cuando hay error (401, 500, etc) - también significa "checked"
+      onError: () => setHasCheckedSession(true),
+    }
+  )
 
-  useEffect(() => {
-    const checkSession = async () => {
-      try {
-        const response = await axiosInstance.get<{ user: User }>('/auth/me');
-
-        if (response.data && response.data.user) {
-          setUser(response.data.user);
-          setIsAuthenticated(true);
-        } else {
-          setUser(null);
-          setIsAuthenticated(false);
-        }
-      } catch (error) {
-        setUser(null);
-        setIsAuthenticated(false);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    checkSession();
-  }, []);
+  const user = data?.user ?? null
+  const isAuthenticated = !!user
+  
+  // Solo mostrar loading si no hemos verificado la sesión todavía
+  const isLoading = !hasCheckedSession
 
   return (
     <AuthContext.Provider
@@ -56,8 +60,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         isLoading,
         isAuthenticated,
-        setUser,
-        setIsAuthenticated,
+        setUser: () => {},
+        setIsAuthenticated: () => {},
+        mutate,
       }}
     >
       {children}

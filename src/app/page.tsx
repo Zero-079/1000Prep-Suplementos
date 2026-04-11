@@ -1,42 +1,18 @@
 // src/app/page.tsx
-"use client"
-
-import { useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { Header } from "@/components/header"
-import { HeroSection } from "@/components/hero-section"
-import { TopCategories } from "@/components/top-categories"
-import { BestSellers } from "@/components/best-sellers"
-import { BenefitsStrip } from "@/components/benefits-strip"
-import { ComingSoonBanner } from "@/components/coming-soon-banner"
-import { Footer } from "@/components/footer"
-import { useAuthContext } from "@/features/auth/context/AuthContext"
+import { Suspense } from "react"
+import { HomeContent } from "@/components/home-content"
 
 export default function Home() {
-  const router = useRouter()
-  const { user, isAuthenticated, isLoading } = useAuthContext()
-
-  // Redirigir vendedores a /catalogo
-  useEffect(() => {
-    if (!isLoading && isAuthenticated && user?.role === "SELLER") {
-      router.replace("/catalogo")
-    }
-  }, [isLoading, isAuthenticated, user, router])
-
-  // No mostrar contenido mientras se verifica auth para vendedores
-  if (!isLoading && isAuthenticated && user?.role === "SELLER") {
-    return null
-  }
-
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <HeroSection />
-      <TopCategories />
-      <BestSellers />
-      <BenefitsStrip />
-      <ComingSoonBanner />
-      <Footer />
-    </div>
+    <Suspense fallback={
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-pulse flex flex-col items-center gap-4">
+          <div className="w-16 h-16 rounded-full bg-muted" />
+          <div className="h-4 w-32 bg-muted rounded" />
+        </div>
+      </div>
+    }>
+      <HomeContent />
+    </Suspense>
   )
 }

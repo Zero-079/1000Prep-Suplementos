@@ -1,9 +1,11 @@
 import type React from "react"
 import type { Metadata } from "next"
+import { Suspense } from "react"
 import { DM_Sans, Playfair_Display, Fraunces } from "next/font/google"
 import "./globals.css"
 import { AuthProvider } from "@/features/auth/context/AuthContext"
 import { SupplementCartProvider } from "@/features/supplements/context/supplements-cart-context"
+import { HeaderSkeleton } from "@/components/auth-loading"
 
 const dmSans = DM_Sans({
   subsets: ["latin"],

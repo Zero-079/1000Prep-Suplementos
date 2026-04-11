@@ -1,6 +1,7 @@
 // src/features/supplements/components/supplement-card.tsx
 "use client"
 
+import { memo } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Plus, ArrowRight, Pencil, Trash2 } from "lucide-react"
@@ -28,7 +29,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   OTHER: "Otros",
 }
 
-export function SupplementCard({ 
+export const SupplementCard = memo(function SupplementCard({ 
   supplement, 
   onOpenDetail, 
   isSeller = false, 
@@ -155,4 +156,4 @@ export function SupplementCard({
       </div>
     </article>
   )
-}
+})

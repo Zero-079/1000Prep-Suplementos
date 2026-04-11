@@ -49,7 +49,7 @@ export function Header() {
     isLoading, 
     isOpen: searchDropdownOpen, 
     setIsOpen: setSearchDropdownOpen 
-  } = useSearch(300) // debounce de 300ms
+  } = useSearch({ debounceMs: 300 }) // debounce de 300ms
   const { user, isAuthenticated, isAuthLoading, logout } = useAuth()
   const { totalItems, isHydrated } = useSupplementCart()
   const searchRef = useRef<HTMLDivElement>(null)

@@ -1,14 +1,13 @@
 // src/app/catalogo/[id]/page.tsx
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState, useEffect, use } from "react"
 import { useRouter } from "next/navigation"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { SupplementDetailContent } from "@/features/supplements/components/supplement-detail-content"
-import { supplementsService } from "@/features/supplements/services/supplements.service"
+import { useSupplementById } from "@/features/supplements/hooks/useSupplements"
 import { useSupplementCart } from "@/features/supplements/context/supplements-cart-context"
-import type { Supplement } from "@/features/supplements/types/supplement"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, RefreshCw, AlertCircle, Package } from "lucide-react"
 
@@ -25,11 +24,10 @@ interface SupplementDetailPageProps {
 
 function LoadingState() {
   return (
-    <div className="min-h-screen bg-background dark:bg-background">
+    <div className="min-h-screen bg-background">
       <Header />
       <div className="pt-24 pb-20 px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
-          {/* Loading skeleton */}
           <div className="animate-pulse">
             <div className="h-10 w-32 bg-muted rounded-lg mb-8" />
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
@@ -53,11 +51,10 @@ function LoadingState() {
 
 function ErrorState({ onRetry, onGoBack }: { onRetry: () => void; onGoBack: () => void }) {
   return (
-    <div className="min-h-screen bg-background dark:bg-background">
+    <div className="min-h-screen bg-background">
       <Header />
       <div className="pt-24 pb-20 px-6 lg:px-8">
         <div className="max-w-xl mx-auto text-center py-16">
-          {/* Decorative background */}
           <div className="relative mb-8">
             <div className="absolute inset-0 bg-primary/10 rounded-full blur-3xl mx-auto w-48 h-48" />
             <div className="relative">
@@ -75,10 +72,7 @@ function ErrorState({ onRetry, onGoBack }: { onRetry: () => void; onGoBack: () =
           </p>
           
           <div className="flex gap-4 justify-center">
-            <Button
-              onClick={onRetry}
-              className="rounded-full"
-            >
+            <Button onClick={onRetry} className="rounded-full">
               <RefreshCw className="w-4 h-4 mr-2" />
               Reintentar
             </Button>
@@ -100,11 +94,10 @@ function ErrorState({ onRetry, onGoBack }: { onRetry: () => void; onGoBack: () =
 
 function NotFoundState({ onGoBack }: { onGoBack: () => void }) {
   return (
-    <div className="min-h-screen bg-background dark:bg-background">
+    <div className="min-h-screen bg-background">
       <Header />
       <div className="pt-24 pb-20 px-6 lg:px-8">
         <div className="max-w-xl mx-auto text-center py-16">
-          {/* Decorative background */}
           <div className="relative mb-8">
             <div className="absolute inset-0 bg-primary/10 rounded-full blur-3xl mx-auto w-48 h-48" />
             <div className="absolute inset-0 bg-accent/10 rounded-full blur-3xl mx-auto w-32 h-32 -top-4 -right-4" />
@@ -137,13 +130,11 @@ function NotFoundState({ onGoBack }: { onGoBack: () => void }) {
   )
 }
 
-export default function SupplementDetailPage({ params }: SupplementDetailPageProps) {
-  const [supplement, setSupplement] = useState<Supplement | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [isNotFound, setIsNotFound] = useState(false)
+// Componente interno que recibe el ID resuelto
+function SupplementDetailInner({ id }: { id: string }) {
   const router = useRouter()
   const { addItem } = useSupplementCart()
+  const { supplement, isLoading, error, refetch } = useSupplementById(id)
 
   const handleAddToCart = (quantity: number) => {
     if (supplement) {
@@ -151,99 +142,24 @@ export default function SupplementDetailPage({ params }: SupplementDetailPagePro
     }
   }
 
-  const handleRetry = () => {
-    setIsLoading(true)
-    setError(null)
-    setIsNotFound(false)
-    
-    params.then(async (resolvedParams) => {
-      const id = resolvedParams.id
-      
-      if (!isValidUUID(id)) {
-        setIsNotFound(true)
-        setIsLoading(false)
-        return
-      }
-      
-      try {
-        const data = await supplementsService.getSupplementById(id)
-        
-        if (!data) {
-          setIsNotFound(true)
-        } else {
-          setSupplement(data)
-        }
-      } catch (err: any) {
-        const status = err?.status
-        if (status === 404) {
-          setIsNotFound(true)
-        } else {
-          setError("Error al cargar el producto. Por favor verificá tu conexión.")
-        }
-      } finally {
-        setIsLoading(false)
-      }
-    })
-  }
-
   const handleGoBack = () => {
     router.push("/catalogo")
   }
-
-  useEffect(() => {
-    const fetchSupplement = async () => {
-      try {
-        setIsLoading(true)
-        setError(null)
-        const resolvedParams = await params
-        const id = resolvedParams.id
-        
-        // Validate UUID format BEFORE making API call
-        if (!isValidUUID(id)) {
-          setIsNotFound(true)
-          setIsLoading(false)
-          return
-        }
-        
-        const data = await supplementsService.getSupplementById(id)
-        
-        if (!data) {
-          setIsNotFound(true)
-          setIsLoading(false)
-          return
-        }
-        
-        setSupplement(data)
-      } catch (err: any) {
-        console.error("Error fetching supplement:", err)
-        const status = err?.status
-        if (status === 404) {
-          setIsNotFound(true)
-        } else {
-          setError("Error al cargar el producto. Por favor verificá tu conexión.")
-        }
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchSupplement()
-  }, [params])
 
   if (isLoading) {
     return <LoadingState />
   }
 
   if (error) {
-    return <ErrorState onRetry={handleRetry} onGoBack={handleGoBack} />
+    return <ErrorState onRetry={() => refetch()} onGoBack={handleGoBack} />
   }
 
-  if (isNotFound || !supplement) {
+  if (!supplement) {
     return <NotFoundState onGoBack={handleGoBack} />
   }
 
   return (
-    <div className="min-h-screen bg-background dark:bg-background">
+    <div className="min-h-screen bg-background">
       <Header />
       <div className="pt-20 pb-20 px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
@@ -264,4 +180,23 @@ export default function SupplementDetailPage({ params }: SupplementDetailPagePro
       <Footer />
     </div>
   )
+}
+
+export default function SupplementDetailPage({ params }: SupplementDetailPageProps) {
+  // Usar use() para resolver la Promise de params en React 19/Next.js 15
+  const resolvedParams = use(params)
+  const { id } = resolvedParams
+
+  // Validar UUID antes de mostrar contenido
+  if (!isValidUUID(id)) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <NotFoundState onGoBack={() => {}} />
+        <Footer />
+      </div>
+    )
+  }
+
+  return <SupplementDetailInner id={id} />
 }

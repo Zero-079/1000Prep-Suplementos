@@ -1,7 +1,7 @@
 // src/features/auth/hooks/useAuth.ts
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthContext } from '../context/AuthContext';
 import { authService, type LoginPayload, type RegisterPayload } from '../services/auth.service';
@@ -9,22 +9,21 @@ import { authService, type LoginPayload, type RegisterPayload } from '../service
 export function useAuth() {
   const router = useRouter();
   const {
-    setIsAuthenticated,
-    setUser,
     isAuthenticated,
     user,
     isLoading: isAuthLoading,
+    mutate,
   } = useAuthContext();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const login = async (data: LoginPayload) => {
+  const login = useCallback(async (data: LoginPayload) => {
     setIsLoading(true);
     setError(null);
     try {
       const response = await authService.login(data);
-      setIsAuthenticated(true);
-      setUser(response.user);
+      // Revalidar auth para actualizar el contexto
+      await mutate();
       const destination = response.user.role === 'SELLER' ? '/catalogo' : '/';
       router.push(destination);
     } catch (err: any) {
@@ -34,9 +33,9 @@ export function useAuth() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [router, mutate]);
 
-  const register = async (data: RegisterPayload) => {
+  const register = useCallback(async (data: RegisterPayload) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -49,21 +48,21 @@ export function useAuth() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [router]);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     setIsLoading(true);
     try {
       await authService.logout();
-      setIsAuthenticated(false);
-      setUser(null);
+      // Revalidar auth para limpiar el estado
+      await mutate();
       router.push('/login');
     } catch (err: any) {
       setError(err.message || 'Error al cerrar sesión');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [router, mutate]);
 
   return {
     login,
