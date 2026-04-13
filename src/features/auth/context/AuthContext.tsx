@@ -1,7 +1,7 @@
 // src/features/auth/context/AuthContext.tsx
 'use client';
 
-import { createContext, useContext, ReactNode, useState } from 'react';
+import React, { createContext, useContext, ReactNode, useState } from 'react';
 import useSWR from 'swr';
 import { axiosFetcher } from '@/lib/use-swr';
 
@@ -33,21 +33,35 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [hasCheckedSession, setHasCheckedSession] = useState(false)
   
+  // Usar una referencia para controlar revalidación basada en si hay sesión activa
+  // Se inicializa como false y se actualiza cuando hay datos
+  const shouldRevalidate = React.useRef(false)
+  
   const { data, isLoading: swrLoading, mutate } = useSWR<{ user: User }>(
     '/auth/me',
     (key) => axiosFetcher(key),
     {
-      revalidateOnFocus: true,
-      revalidateOnReconnect: true,
+      // Revalidar automáticamente solo cuando hay datos válidos en cache
+      revalidateOnFocus: shouldRevalidate.current,
+      revalidateOnReconnect: shouldRevalidate.current,
       dedupingInterval: 5000,
       fallbackData: undefined,
-      // onSuccess se ejecuta cuando hay usuario autenticado
-      onSuccess: () => setHasCheckedSession(true),
-      // onError se ejecuta cuando hay error (401, 500, etc) - también significa "checked"
-      onError: () => setHasCheckedSession(true),
+      onSuccess: () => {
+        shouldRevalidate.current = true
+        setHasCheckedSession(true)
+      },
+      onError: () => {
+        shouldRevalidate.current = false
+        setHasCheckedSession(true)
+      },
     }
   )
 
+  // Actualizar la referencia cuando hay datos
+  if (data?.user) {
+    shouldRevalidate.current = true
+  }
+  
   const user = data?.user ?? null
   const isAuthenticated = !!user
   

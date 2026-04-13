@@ -4,7 +4,7 @@
  */
 
 import axios, { AxiosError, AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios'
-import { getAccessToken, getRefreshToken } from './cookies'
+import { getAccessToken, getRefreshToken, setAccessToken, setRefreshToken } from '@/features/auth/services/auth.service'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
 
@@ -64,7 +64,8 @@ axiosInstance.interceptors.request.use(
 function isPublicRoute(): boolean {
   if (typeof window === 'undefined') return false
   const path = window.location.pathname
-  return path === '/login' || path === '/registro' || path === '/'
+  // Sincronizado con middleware.ts publicRoutes
+  return path === '/login' || path === '/registro' || path === '/' || path === '/catalogo' || path === '/forgot-password'
 }
 
 /**
@@ -79,13 +80,15 @@ axiosInstance.interceptors.response.use(
 
     // Solo manejar errores 401 que no sean el endpoint de refresh
     if (error.response?.status === 401 && originalRequest && !originalRequest.url?.includes('/auth/refresh')) {
-      // Verificar si hay refresh token disponible
+      // Verificar si hay refresh token disponible en el store
       const refreshToken = getRefreshToken()
+      console.log('[Axios Interceptor] Refresh token value:', refreshToken ? refreshToken.substring(0, 20) + '...' : 'null (usando cookie httpOnly)')
       console.log('[Axios Interceptor] Refresh token available:', !!refreshToken)
 
-      // Si no hay refresh token y estamos en ruta pública, rechazar sin redirect
-      if (!refreshToken && isPublicRoute()) {
-        console.log('[Axios Interceptor] No refresh token and on public route, rejecting without redirect')
+      // Si estamos en ruta pública (login/register), rechazar sin redirect
+      // porque el usuario no está autenticado
+      if (isPublicRoute()) {
+        console.log('[Axios Interceptor] On public route, rejecting without redirect')
         processQueue(error)
         return Promise.reject(error)
       }
@@ -115,12 +118,21 @@ axiosInstance.interceptors.response.use(
       originalRequest._retry = true
       isRefreshing = true
 
-      console.log('[Axios Interceptor] Attempting refresh token...')
+      console.log('[Axios Interceptor] Attempting refresh token with cookie...')
 
       try {
-        // Llamar al endpoint de refresh
+        // Llamar al endpoint de refresh - el backend lee la cookie directamente
+        console.log('[Axios Interceptor] Calling /auth/refresh withCredentials:', true)
         const refreshResponse = await axios.post(`${API_BASE_URL}/auth/refresh`, {}, { withCredentials: true })
         console.log('[Axios Interceptor] Refresh success:', refreshResponse.data)
+
+        // Actualizar tokens en el store
+        if (refreshResponse.data.access_token) {
+          setAccessToken(refreshResponse.data.access_token)
+        }
+        if (refreshResponse.data.refresh_token) {
+          setRefreshToken(refreshResponse.data.refresh_token)
+        }
 
         // Refresh exitoso, procesar cola
         processQueue(null)
@@ -129,6 +141,7 @@ axiosInstance.interceptors.response.use(
         return axiosInstance(originalRequest)
       } catch (refreshError: any) {
         console.log('[Axios Interceptor] Refresh failed:', refreshError.response?.status, refreshError.response?.data)
+        console.log('[Axios Interceptor] Refresh error message:', refreshError.response?.data?.message)
         // Refresh falló, rechazar cola
         processQueue(refreshError as AxiosError)
 

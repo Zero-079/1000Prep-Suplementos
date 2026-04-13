@@ -4,7 +4,7 @@
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthContext } from '../context/AuthContext';
-import { authService, type LoginPayload, type RegisterPayload } from '../services/auth.service';
+import { authService, setRefreshToken, setAccessToken, type LoginPayload, type RegisterPayload } from '../services/auth.service';
 
 export function useAuth() {
   const router = useRouter();
@@ -22,6 +22,14 @@ export function useAuth() {
     setError(null);
     try {
       const response = await authService.login(data);
+      console.log('[useAuth] Login response:', response);
+      // Guardar refresh_token en store para que el interceptor pueda usarlo
+      if (response.refresh_token) {
+        console.log('[useAuth] Setting refresh token:', response.refresh_token.substring(0, 20) + '...');
+        setRefreshToken(response.refresh_token);
+      } else {
+        console.log('[useAuth] No refresh_token in response!');
+      }
       // Revalidar auth para actualizar el contexto
       await mutate();
       const destination = response.user.role === 'SELLER' ? '/catalogo' : '/';
@@ -51,18 +59,21 @@ export function useAuth() {
   }, [router]);
 
   const logout = useCallback(async () => {
+    // Limpiar tokens PRIMERO antes de cualquier cosa
+    setAccessToken(null);
+    setRefreshToken(null);
+    
     setIsLoading(true);
     try {
       await authService.logout();
-      // Revalidar auth para limpiar el estado
-      await mutate();
-      router.push('/login');
     } catch (err: any) {
-      setError(err.message || 'Error al cerrar sesión');
-    } finally {
-      setIsLoading(false);
+      // Ignorar errores - tokens ya limpiados
     }
-  }, [router, mutate]);
+    
+    // RECARGAR la página para limpiar todo el estado (SWR cache, React state, etc)
+    // Esto evita el dropdown stale
+    window.location.href = '/login';
+  }, []);
 
   return {
     login,

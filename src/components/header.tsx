@@ -51,6 +51,9 @@ export function Header() {
     setIsOpen: setSearchDropdownOpen 
   } = useSearch({ debounceMs: 300 }) // debounce de 300ms
   const { user, isAuthenticated, isAuthLoading, logout } = useAuth()
+  
+  // Forzar espera de verificación de sesión antes de mostrar UI de usuario autenticado
+  const showUserMenu = isAuthenticated && user && !isAuthLoading
   const { totalItems, isHydrated } = useSupplementCart()
   const searchRef = useRef<HTMLDivElement>(null)
 
@@ -377,7 +380,7 @@ export function Header() {
                   <div className="h-10 w-full rounded-full bg-muted" />
                   <div className="h-10 w-full rounded-full bg-muted" />
                 </div>
-              ) : isAuthenticated && user ? (
+            ) : showUserMenu ? (
                 <div className="flex flex-col gap-1 mt-3 pt-3 border-t border-border/50">
                   <div className="flex items-center gap-3 px-1 mb-3">
                     <Avatar className="size-9">
