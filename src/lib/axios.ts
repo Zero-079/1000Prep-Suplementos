@@ -4,7 +4,7 @@
  */
 
 import axios, { AxiosError, AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios'
-import { getAccessToken } from './cookies'
+import { getAccessToken, getRefreshToken } from './cookies'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
 
@@ -58,6 +58,16 @@ axiosInstance.interceptors.request.use(
 )
 
 /**
+ * Helper para verificar si estamos en una ruta pública
+ * No intentar refresh si ya estamos en login/register o rutas públicas
+ */
+function isPublicRoute(): boolean {
+  if (typeof window === 'undefined') return false
+  const path = window.location.pathname
+  return path === '/login' || path === '/registro' || path === '/'
+}
+
+/**
  * Interceptor de response: maneja 401 y refresh token
  */
 axiosInstance.interceptors.response.use(
@@ -69,12 +79,23 @@ axiosInstance.interceptors.response.use(
 
     // Solo manejar errores 401 que no sean el endpoint de refresh
     if (error.response?.status === 401 && originalRequest && !originalRequest.url?.includes('/auth/refresh')) {
+      // Verificar si hay refresh token disponible
+      const refreshToken = getRefreshToken()
+      console.log('[Axios Interceptor] Refresh token available:', !!refreshToken)
+
+      // Si no hay refresh token y estamos en ruta pública, rechazar sin redirect
+      if (!refreshToken && isPublicRoute()) {
+        console.log('[Axios Interceptor] No refresh token and on public route, rejecting without redirect')
+        processQueue(error)
+        return Promise.reject(error)
+      }
+
       // Evitar loops infinitos
       if (originalRequest._retry) {
-        console.log('[Axios Interceptor] Retry flag set, redirecting to login')
+        console.log('[Axios Interceptor] Retry flag set, rejecting')
         processQueue(error)
-        // Redirect a login si el refresh falla
-        if (typeof window !== 'undefined') {
+        // Solo hacer redirect si NO estamos en una ruta pública
+        if (!isPublicRoute() && typeof window !== 'undefined') {
           window.location.href = '/login'
         }
         return Promise.reject(error)
@@ -104,11 +125,6 @@ axiosInstance.interceptors.response.use(
         // Refresh exitoso, procesar cola
         processQueue(null)
 
-        // Recargar la página para actualizar la UI con el nuevo token
-        if (typeof window !== 'undefined') {
-          window.location.reload()
-        }
-
         // Reintentar request original con el nuevo token
         return axiosInstance(originalRequest)
       } catch (refreshError: any) {
@@ -116,8 +132,8 @@ axiosInstance.interceptors.response.use(
         // Refresh falló, rechazar cola
         processQueue(refreshError as AxiosError)
 
-        // Redirect a login
-        if (typeof window !== 'undefined') {
+        // Solo hacer redirect si NO estamos en una ruta pública
+        if (!isPublicRoute() && typeof window !== 'undefined') {
           window.location.href = '/login'
         }
 
@@ -128,8 +144,8 @@ axiosInstance.interceptors.response.use(
     }
 
     // Para otros errores (403, 500, etc.), rechazar directamente
-    // Pero también hacer redirect para 403
-    if (error.response?.status === 403 && typeof window !== 'undefined') {
+    // Pero también hacer redirect para 403 solo si no estamos en ruta pública
+    if (error.response?.status === 403 && !isPublicRoute() && typeof window !== 'undefined') {
       window.location.href = '/login'
     }
 
