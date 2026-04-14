@@ -1,5 +1,6 @@
 // src/features/auth/services/auth.service.ts
 import axiosInstance from '@/lib/axios'
+import { getRefreshToken as getRefreshTokenCookie, setRefreshToken as setRefreshTokenCookie, deleteRefreshToken } from '@/lib/cookies'
 import type { AxiosResponse } from 'axios'
 
 export interface AddressPayload {
@@ -12,7 +13,6 @@ export interface AddressPayload {
 
 export interface RegisterPayload {
   name: string
-  email: string
   phone: string
   address: AddressPayload
   password: string
@@ -38,12 +38,11 @@ export interface AuthResponse {
 }
 
 /**
- * Store en memoria para tokens
- * Necesario porque cookies httpOnly no son accesibles desde JS
+ * Store en memoria para access_token
+ * El refresh_token ahora se persiste en cookie para sobrevivir a recargas
  */
 const tokenStore = {
   accessToken: null as string | null,
-  refreshToken: null as string | null,
 };
 
 export function getAccessToken(): string | null {
@@ -54,12 +53,35 @@ export function setAccessToken(token: string | null): void {
   tokenStore.accessToken = token;
 }
 
+/**
+ * Obtiene el refresh_token desde cookie (persiste entre recargas)
+ */
 export function getRefreshToken(): string | null {
-  return tokenStore.refreshToken;
+  // Primero intentar desde cookie (persistente)
+  const cookieToken = getRefreshTokenCookie();
+  if (cookieToken) {
+    return cookieToken;
+  }
+  // Fallback: store en memoria (para compatibilidad)
+  return null;
 }
 
+/**
+ * Guarda el refresh_token en cookie (persiste entre recargas)
+ */
 export function setRefreshToken(token: string | null): void {
-  tokenStore.refreshToken = token;
+  if (token) {
+    setRefreshTokenCookie(token);
+  } else {
+    deleteRefreshToken();
+  }
+}
+
+/**
+ * Limpia el refresh_token (logout)
+ */
+export function clearRefreshToken(): void {
+  deleteRefreshToken();
 }
 
 // URL del backend para OAuth (necesita directa porque es redirect)

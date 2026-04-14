@@ -34,6 +34,7 @@ function getInitials(name: string) {
 const navLinks = [
   { label: "Inicio", href: "/" },
   { label: "Catálogo", href: "/catalogo" },
+  { label: "Órdenes", href: "/ordenes" },
 ]
 
 export function Header() {
@@ -59,10 +60,13 @@ export function Header() {
   const searchRef = useRef<HTMLDivElement>(null)
 
   // Filtrar enlaces según el rol del usuario
-  // Ocultar "Inicio" para usuarios SELLER
+  // Ocultar "Inicio" para usuarios SELLER, agregar "Órdenes" para SELLER
   const { hasPermission: isSeller } = useRoles(['SELLER'])
   const visibleNavLinks = navLinks.filter((link) => {
+    // Ocultar "Inicio" para SELLER
     if (link.href === "/" && isSeller) return false
+    // Ocultar "Órdenes" para no-SELLER (solo mostrar para SELLER)
+    if (link.href === "/ordenes" && !isSeller) return false
     return true
   })
 
@@ -404,6 +408,13 @@ export function Header() {
                     <User className="size-4" />Mi cuenta
                   </Link>
                   <Link
+                    href="/ordenes"
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-foreground hover:bg-muted/60 transition-colors text-sm"
+                  >
+                    <Package className="size-4" />Órdenes
+                  </Link>
+                  <Link
                     href="/pedidos"
                     onClick={() => setIsOpen(false)}
                     className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-foreground hover:bg-muted/60 transition-colors text-sm"
@@ -442,6 +453,8 @@ function AccountMenu({ user, onLogout, onOpenChange }: { user: HeaderUser; onLog
   const handleOpenChange = (open: boolean) => {
     onOpenChange?.(open)
   }
+  const { user: authUser } = useAuth()
+  const isSeller = authUser?.role === "SELLER"
 
   return (
     <DropdownMenu onOpenChange={handleOpenChange}>
@@ -482,12 +495,22 @@ function AccountMenu({ user, onLogout, onOpenChange }: { user: HeaderUser; onLog
               <span>Mi cuenta</span>
             </Link>
           </DropdownMenuItem>
-          <DropdownMenuItem asChild className="rounded-lg px-3 py-2.5 cursor-pointer">
-            <Link href="/pedidos">
-              <Package className="size-4" />
-              <span>Mis pedidos</span>
-            </Link>
-          </DropdownMenuItem>
+          {isSeller && (
+            <DropdownMenuItem asChild className="rounded-lg px-3 py-2.5 cursor-pointer">
+              <Link href="/ordenes">
+                <Package className="size-4" />
+                <span>Órdenes</span>
+              </Link>
+            </DropdownMenuItem>
+          )}
+          {!isSeller && (
+            <DropdownMenuItem asChild className="rounded-lg px-3 py-2.5 cursor-pointer">
+              <Link href="/pedidos">
+                <Package className="size-4" />
+                <span>Mis pedidos</span>
+              </Link>
+            </DropdownMenuItem>
+          )}
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem

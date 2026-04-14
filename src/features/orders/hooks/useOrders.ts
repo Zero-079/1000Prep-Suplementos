@@ -49,6 +49,7 @@ export interface Order {
   items: OrderItem[]
   address: OrderAddress | null
   payment: OrderPayment | null
+  userId: string
 }
 
 interface UseOrdersReturn {

@@ -20,6 +20,7 @@ export type Role = 'CLIENT' | 'SELLER' | 'ADMIN'
 export type Action =
   | 'view:account'       // acceder a /cuenta
   | 'view:orders'        // acceder a /pedidos
+  | 'view:seller-orders' // acceder a /ordenes (vendedor)
   | 'create:order'       // crear pedidos
   | 'edit:supplement'    // editar suplementos
   | 'create:supplement' // crear suplementos
@@ -47,6 +48,7 @@ const ROLE_PERMISSIONS_CONFIG: RolePermissions = {
   ],
   SELLER: [
     'view:account',
+    'view:seller-orders',
     'edit:supplement',
     'create:supplement',
     'delete:supplement',
@@ -118,6 +120,7 @@ export function getAllActions(): Action[] {
 export const PROTECTED_ROUTES: Record<string, Role[]> = {
   '/cuenta': ['CLIENT', 'SELLER', 'ADMIN'],
   '/pedidos': ['CLIENT'],
+  '/ordenes': ['SELLER'],
   '/admin': ['ADMIN'], // futuro
 }
 
