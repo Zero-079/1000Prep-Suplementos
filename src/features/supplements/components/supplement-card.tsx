@@ -9,12 +9,12 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import type { Supplement } from "@/features/supplements/types/supplement"
 import { useSupplementCart } from "@/features/supplements/context/supplements-cart-context"
+import { usePermission } from "@/features/auth/hooks/usePermission"
 import { formatCOP } from "@/lib/utils"
 
 interface SupplementCardProps {
   supplement: Supplement
   onOpenDetail: (supplement: Supplement) => void
-  isSeller?: boolean
   onEdit?: (supplement: Supplement) => void
   onDelete?: (supplement: Supplement) => void
 }
@@ -32,11 +32,12 @@ const CATEGORY_LABELS: Record<string, string> = {
 export const SupplementCard = memo(function SupplementCard({ 
   supplement, 
   onOpenDetail, 
-  isSeller = false, 
   onEdit, 
   onDelete 
 }: SupplementCardProps) {
   const { addItem } = useSupplementCart()
+  const { hasPermission: canEdit } = usePermission('edit:supplement')
+  const { hasPermission: canDelete } = usePermission('delete:supplement')
 
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -101,7 +102,7 @@ export const SupplementCard = memo(function SupplementCard({
         )}
 
         <div className="flex items-center justify-between pt-2 border-t border-border/50 mt-auto">
-          {isSeller ? (
+          {canEdit ? (
             <div className="flex items-center gap-1">
               <Button
                 variant="outline"

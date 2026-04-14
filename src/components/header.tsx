@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useAuth } from "@/features/auth/hooks/useAuth"
+import { useRoles } from "@/features/auth/hooks/usePermission"
 import { useSupplementCart } from "@/features/supplements/context/supplements-cart-context"
 import { useSearch } from "@/features/supplements/hooks/useSearch"
 import { SearchResultsDropdown } from "@/features/supplements/components/search-results-dropdown"
@@ -59,8 +60,9 @@ export function Header() {
 
   // Filtrar enlaces según el rol del usuario
   // Ocultar "Inicio" para usuarios SELLER
+  const { hasPermission: isSeller } = useRoles(['SELLER'])
   const visibleNavLinks = navLinks.filter((link) => {
-    if (link.href === "/" && user?.role === "SELLER") return false
+    if (link.href === "/" && isSeller) return false
     return true
   })
 

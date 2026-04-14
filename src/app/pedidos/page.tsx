@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
-import { ProtectedRoute } from "@/components/protected-route"
+import { ProtectedRoute } from "@/components/ProtectedRoute"
 import { useOrders, type Order } from "@/features/orders/hooks/useOrders"
 import { OrderCard, OrderDetailDrawer } from "@/features/orders/components"
 import {
@@ -31,7 +31,7 @@ export default function PedidosPage() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
 
   return (
-    <ProtectedRoute>
+    <ProtectedRoute roles={['CLIENT']}>
     <div className="min-h-screen bg-muted/40">
       <Header />
 

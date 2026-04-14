@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
-import { ProtectedRoute } from "@/components/protected-route"
+import { ProtectedRoute } from "@/components/ProtectedRoute"
 import { useAuth } from "@/features/auth/hooks/useAuth"
 import { useAddresses } from "@/features/account/hooks/useAddresses"
 import { ProfileSidebar } from "@/features/account/components/profile-sidebar"

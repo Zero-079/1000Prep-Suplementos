@@ -1,26 +1,10 @@
 // src/features/auth/context/AuthContext.tsx
 'use client';
 
-import React, { createContext, useContext, ReactNode, useState } from 'react';
+import React, { createContext, useContext, ReactNode, useState, useMemo } from 'react';
 import useSWR from 'swr';
 import { axiosFetcher } from '@/lib/use-swr';
-
-interface User {
-  id: string;
-  email: string;
-  name: string;
-  role: string;
-  avatarUrl?: string;
-}
-
-interface AuthContextType {
-  user: User | null;
-  isLoading: boolean;
-  isAuthenticated: boolean;
-  setUser: (user: User | null) => void;
-  setIsAuthenticated: (value: boolean) => void;
-  mutate: () => Promise<{ user: User } | undefined>;
-}
+import type { User, AuthContextType } from '../types/auth';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -29,42 +13,43 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
  * - Deduplica requests automáticamente con otros componentes
  * - Cachea la sesión en memoria
  * - Usa estado local para permitir transición de loading a no-loading
+ * - Revalida automáticamente SOLO cuando hay sesión activa
  */
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [hasCheckedSession, setHasCheckedSession] = useState(false)
-  
-  // Usar una referencia para controlar revalidación basada en si hay sesión activa
-  // Se inicializa como false y se actualiza cuando hay datos
-  const shouldRevalidate = React.useRef(false)
-  
+  const [hasSession, setHasSession] = useState(false)
+
+  // Usar useMemo para evitar que el objeto de opciones se recree en cada render
+  // Esto es necesario porque SWR compara las opciones por referencia
+  const swrOptions = useMemo(() => ({
+    revalidateOnFocus: hasSession,
+    revalidateOnReconnect: hasSession,
+    revalidateIfStale: hasSession,
+    dedupingInterval: 5000,
+    fallbackData: undefined,
+    onSuccess: () => {
+      setHasSession(true)
+      setHasCheckedSession(true)
+    },
+    onError: () => {
+      setHasSession(false)
+      setHasCheckedSession(true)
+    },
+  }), [hasSession])
+
+  // KEY dinámico que fuerza remount cuando cambia hasSession
+  // Esto hace que SWR reevalúe las opciones con los nuevos valores
+  const swrKey = useMemo(() => ['/auth/me', hasSession] as const, [hasSession])
+
   const { data, isLoading: swrLoading, mutate } = useSWR<{ user: User }>(
-    '/auth/me',
-    (key) => axiosFetcher(key),
-    {
-      // Revalidar automáticamente solo cuando hay datos válidos en cache
-      revalidateOnFocus: shouldRevalidate.current,
-      revalidateOnReconnect: shouldRevalidate.current,
-      dedupingInterval: 5000,
-      fallbackData: undefined,
-      onSuccess: () => {
-        shouldRevalidate.current = true
-        setHasCheckedSession(true)
-      },
-      onError: () => {
-        shouldRevalidate.current = false
-        setHasCheckedSession(true)
-      },
-    }
+    swrKey,
+    ([key]) => axiosFetcher(key),
+    swrOptions
   )
 
-  // Actualizar la referencia cuando hay datos
-  if (data?.user) {
-    shouldRevalidate.current = true
-  }
-  
   const user = data?.user ?? null
   const isAuthenticated = !!user
-  
+
   // Solo mostrar loading si no hemos verificado la sesión todavía
   const isLoading = !hasCheckedSession
 

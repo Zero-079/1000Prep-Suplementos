@@ -11,20 +11,25 @@ import { BenefitsStrip } from "@/components/benefits-strip"
 import { ComingSoonBanner } from "@/components/coming-soon-banner"
 import { Footer } from "@/components/footer"
 import { useAuthContext } from "@/features/auth/context/AuthContext"
+import { useRoles } from "@/features/auth/hooks/usePermission"
 
 export function HomeContent() {
   const router = useRouter()
   const { user, isAuthenticated, isLoading } = useAuthContext()
+  const { hasPermission: isSeller, isLoading: isRoleLoading } = useRoles(['SELLER'])
+
+  // Combinar loading states
+  const isChecking = isLoading || isRoleLoading
 
   // Redirigir vendedores a /catalogo
   useEffect(() => {
-    if (!isLoading && isAuthenticated && user?.role === "SELLER") {
+    if (!isChecking && isAuthenticated && isSeller) {
       router.replace("/catalogo")
     }
-  }, [isLoading, isAuthenticated, user, router])
+  }, [isChecking, isAuthenticated, isSeller, router])
 
   // No mostrar contenido mientras se verifica auth para vendedores
-  if (!isLoading && isAuthenticated && user?.role === "SELLER") {
+  if (!isChecking && isAuthenticated && isSeller) {
     return null
   }
 

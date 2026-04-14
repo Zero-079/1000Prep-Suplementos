@@ -1,11 +1,7 @@
 // middleware.ts
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-
-/**
- * Rutas que requieren autenticación
- */
-const protectedRoutes = ['/cuenta', '/pedidos']
+import { PROTECTED_ROUTES, isRouteProtected } from '@/config/permissions'
 
 /**
  * Rutas públicas que deben ser accesibles sin autenticación
@@ -13,15 +9,13 @@ const protectedRoutes = ['/cuenta', '/pedidos']
 const publicRoutes = ['/', '/login', '/register', '/forgot-password', '/catalogo']
 
 /**
- * Rutas que deben redirigir a vendedores al catálogo
- */
-const sellerRedirectRoutes = ['/']
-
-/**
  * Middleware de autenticación server-side
  * - Verifica cookies de autenticación
- * - Protege rutas privadas
- * - Maneja redirect de vendedores
+ * - Protege rutas privadas usando permissions.ts
+ * - La verificación por roles específica se maneja en ProtectedRoute (client-side)
+ * 
+ * NOTA: Para protección por rol server-side, el JWT debe contener el campo 'role'
+ * y decodificarse aquí. Por ahora, /pedidos (solo CLIENT) se protege en cliente.
  */
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -31,8 +25,8 @@ export function middleware(request: NextRequest) {
   const refreshToken = request.cookies.get('refreshToken')?.value
   const hasAuth = !!accessToken || !!refreshToken
 
-  // Verificar si es una ruta protegida
-  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route))
+  // Verificar si es una ruta protegida (usa permissions.ts)
+  const requiresAuth = isRouteProtected(pathname)
   
   // Verificar si es una ruta pública
   const isPublicRoute = publicRoutes.some(route => pathname === route || pathname.startsWith(route + '/'))
@@ -47,18 +41,16 @@ export function middleware(request: NextRequest) {
   }
 
   // 1. Rutas protegidas requieren autenticación
-  if (isProtectedRoute && !hasAuth) {
+  if (requiresAuth && !hasAuth) {
     const loginUrl = new URL('/login', request.url)
     loginUrl.searchParams.set('redirect', pathname)
     return NextResponse.redirect(loginUrl)
   }
 
-  // 2. Redirigir vendedores desde la raíz
-  // Nota: Esto requiere verificar el rol del usuario, que solo está disponible
-  // desde el client-side. Para server-side completo, el backend debería
-  // devolver un header con el rol o usar un token decodificado.
-  // Por ahora, deferimos esta lógica al client-side (AuthContext).
-
+  // 2. Verificación por rol específica para /pedidos (solo CLIENT)
+  // Esto requiere decodificar el JWT o hacer un request al backend
+  // Por ahora, se maneja en ProtectedRoute del cliente
+  
   // 3. Si está autenticado y trata de acceder a login/register, redirigir
   if (hasAuth && (pathname === '/login' || pathname === '/register')) {
     return NextResponse.redirect(new URL('/', request.url))

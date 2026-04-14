@@ -11,6 +11,7 @@ import { CreateSupplementModal } from "./create-supplement-modal"
 import { EditSupplementModal } from "./edit-supplement-modal"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { useAuth } from "@/features/auth/hooks/useAuth"
+import { useRoles, usePermission } from "@/features/auth/hooks/usePermission"
 import { supplementsService } from "@/features/supplements/services/supplements.service"
 import type { Supplement, SupplementCategoryFilter } from "@/features/supplements/types/supplement"
 import { cn } from "@/lib/utils"
@@ -67,6 +68,8 @@ export function SupplementsFilter({
   const searchParams = useSearchParams()
   const router = useRouter()
   const { user } = useAuth()
+  const { hasPermission: canEditSupplements } = usePermission('edit:supplement')
+  const { hasPermission: canCreateSupplements } = usePermission('create:supplement')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   
@@ -173,7 +176,7 @@ export function SupplementsFilter({
               </button>
             ))}
           </div>
-          {user?.role === "SELLER" && <AddSupplementButton onClick={() => setIsModalOpen(true)} />}
+          {canCreateSupplements && <AddSupplementButton onClick={() => setIsModalOpen(true)} />}
         </div>
       </div>
 
@@ -277,7 +280,6 @@ export function SupplementsFilter({
                 key={s.id} 
                 supplement={s} 
                 onOpenDetail={onOpenDetail}
-                isSeller={user?.role === "SELLER"}
                 onEdit={handleEdit}
                 onDelete={handleDeleteClick}
               />
