@@ -82,20 +82,12 @@ axiosInstance.interceptors.response.use(
 
     // Solo manejar errores 401 que no sean el endpoint de refresh
     if (error.response?.status === 401 && originalRequest && !originalRequest.url?.includes('/auth/refresh')) {
-      // Verificar si hay refresh token disponible en el store
+      // Verificar si hay refresh token disponible
       const refreshToken = getRefreshToken()
-      console.log('[Axios Interceptor] Refresh token value:', refreshToken ? refreshToken.substring(0, 20) + '...' : 'null (usando cookie httpOnly)')
+      console.log('[Axios Interceptor] Refresh token value:', refreshToken ? refreshToken.substring(0, 20) + '...' : 'null')
       console.log('[Axios Interceptor] Refresh token available:', !!refreshToken)
 
-      // Si estamos en ruta pública (login/register), rechazar sin redirect
-      // porque el usuario no está autenticado
-      if (isPublicRoute()) {
-        console.log('[Axios Interceptor] On public route, rejecting without redirect')
-        processQueue(error)
-        return Promise.reject(error)
-      }
-
-      // Evitar loops infinitos
+      // Evitar loops infinitos - si ya reintentamos, no volver a intentar
       if (originalRequest._retry) {
         console.log('[Axios Interceptor] Retry flag set, rejecting')
         processQueue(error)
@@ -105,6 +97,10 @@ axiosInstance.interceptors.response.use(
         }
         return Promise.reject(error)
       }
+
+      // IMPORTANTE: Intentar refresh SIEMPRE si hay refresh token, sin importar la ruta
+      // Las rutas públicas (/, /catalogo, etc.) no significa que el usuario no tenga sesión válida
+      // El check de isPublicRoute() solo afecta el redirect DESPUÉS de un failure, no antes de intentar refresh
 
       if (isRefreshing) {
         console.log('[Axios Interceptor] Already refreshing, waiting in queue')

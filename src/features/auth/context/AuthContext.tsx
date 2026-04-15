@@ -50,8 +50,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const user = data?.user ?? null
   const isAuthenticated = !!user
 
-  // Solo mostrar loading si no hemos verificado la sesión todavía
-  const isLoading = !hasCheckedSession
+  // IMPORTANTE: Usar swrLoading en lugar de !hasCheckedSession para evitar flash
+  // El problema era: cuando hasCheckedSession = true, isLoading = false pero user todavía no estaba actualizado
+  // Con swrLoading, el skeleton se muestra hasta que SWR tenga datos reales (success o error)
+  const isLoading = swrLoading
 
   return (
     <AuthContext.Provider
