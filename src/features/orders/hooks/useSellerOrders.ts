@@ -127,8 +127,13 @@ export function useSellerOrders(): UseSellerOrdersReturn {
     }
   }, [])
 
+  // Polling para actualización automática cada 30 segundos
   useEffect(() => {
-    fetchOrders()
+    const intervalId = setInterval(() => {
+      fetchOrders()
+    }, 30000) // 30 segundos
+
+    return () => clearInterval(intervalId)
   }, [fetchOrders])
 
   return { orders, usersMap, isLoading, error, refetch: fetchOrders, updateOrderStatus }
