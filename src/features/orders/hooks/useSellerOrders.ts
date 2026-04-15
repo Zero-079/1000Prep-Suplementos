@@ -77,30 +77,31 @@ export function useSellerOrders(): UseSellerOrdersReturn {
     setIsLoading(true)
     setError(null)
     try {
-      // Obtiene TODOS los pedidos sin filtro por orderType
-      const ordersResponse = await axiosInstance.get<Order[]>("/orders")
+      // El endpoint correcto para que SELLER vea todos los pedidos de suplementos
+      const ordersResponse = await axiosInstance.get<Order[]>("/orders/supplement")
       const fetchedOrders = ordersResponse.data
+      
       setOrders(fetchedOrders)
 
       // Obtiene usuarios únicos de las órdenes
       const userIds = [...new Set(fetchedOrders.map((o) => o.userId).filter(Boolean))]
       if (userIds.length > 0) {
-        const usersArray: User[] = []
-        await Promise.all(
+        // Usar Promise.all con map para mantener el orden correcto
+        const usersResponses = await Promise.all(
           userIds.map(async (userId) => {
             try {
               const userResponse = await axiosInstance.get<User>(`/users/${userId}`)
-              usersArray.push(userResponse.data)
+              return { userId, user: userResponse.data }
             } catch {
-              // Ignora errores de usuarios individuales
+              return { userId, user: null }
             }
           })
         )
-        // Create usersMap: userId -> User (map by position)
+        // Create usersMap correctamente
         const newUsersMap = new Map<string, User>()
-        userIds.forEach((userId, index) => {
-          if (usersArray[index]) {
-            newUsersMap.set(userId, usersArray[index])
+        usersResponses.forEach(({ userId, user }) => {
+          if (user) {
+            newUsersMap.set(userId, user)
           }
         })
         setUsersMap(newUsersMap)

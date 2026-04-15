@@ -64,8 +64,10 @@ axiosInstance.interceptors.request.use(
 function isPublicRoute(): boolean {
   if (typeof window === 'undefined') return false
   const path = window.location.pathname
-  // Sincronizado con middleware.ts publicRoutes
-  return path === '/login' || path === '/registro' || path === '/' || path === '/catalogo' || path === '/forgot-password'
+  // Sincronizado con middleware.ts publicRoutes (/login, /register, /forgot-password)
+  // Nota: el middleware usa /register pero el frontend puede usar /registro en otros lugares
+  const publicPaths = ['/login', '/register', '/forgot-password', '/', '/catalogo']
+  return publicPaths.some(p => path === p || path.startsWith(p + '/'))
 }
 
 /**
