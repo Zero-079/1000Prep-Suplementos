@@ -37,7 +37,7 @@ export interface OrderPayment {
 export interface Order {
   id: string
   orderType: "SUPPLEMENT" | "MEAL" | string
-  status: "PENDING" | "CONFIRMED" | "PREPARING" | "ON_THE_WAY" | "DELIVERED" | "CANCELLED" | "COMPLETED" | "EXPIRED" | string
+  status: "PENDING" | "CONFIRMED" | "ON_THE_WAY" | "DELIVERED" | "CANCELLED" | "COMPLETED" | "EXPIRED" | string
   subtotal: string
   discount: string
   total: string
@@ -65,6 +65,7 @@ interface UseSellerOrdersReturn {
   isLoading: boolean
   error: string | null
   refetch: () => Promise<void>
+  updateOrderStatus: (orderId: string, status: string) => Promise<void>
 }
 
 export function useSellerOrders(): UseSellerOrdersReturn {
@@ -113,9 +114,22 @@ export function useSellerOrders(): UseSellerOrdersReturn {
     }
   }, [])
 
+  const updateOrderStatus = useCallback(async (orderId: string, status: string) => {
+    try {
+      await axiosInstance.patch("/orders/status", { orderId, status })
+      setOrders((prev) =>
+        prev.map((order) =>
+          order.id === orderId ? { ...order, status } : order
+        )
+      )
+    } catch (err) {
+      throw err instanceof Error ? err : new Error("Error al actualizar el estado")
+    }
+  }, [])
+
   useEffect(() => {
     fetchOrders()
   }, [fetchOrders])
 
-  return { orders, usersMap, isLoading, error, refetch: fetchOrders }
+  return { orders, usersMap, isLoading, error, refetch: fetchOrders, updateOrderStatus }
 }

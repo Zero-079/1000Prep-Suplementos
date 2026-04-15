@@ -5,6 +5,7 @@ import { Order } from "../hooks/useOrders"
 import type { User as UserData } from "../hooks/useSellerOrders"
 import { StatusBadge } from "./status-badge"
 import { fetchAPI } from "@/config/api"
+import axiosInstance from "@/lib/axios"
 import {
   Dialog,
   DialogContent,
@@ -22,8 +23,22 @@ import {
   Phone,
   X,
   ShoppingBag,
+  Loader2,
+  CheckCircle,
+  Truck,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+
+type AllowedSellerStatus = "ON_THE_WAY" | "DELIVERED"
+
+interface OrderDetailModalProps {
+  order: Order | null
+  usersMap: Map<string, UserData>
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onStatusUpdate?: (orderId: string, status: string) => Promise<void>
+}
 
 function formatCOP(value: string | number): string {
   const num = typeof value === "string" ? parseFloat(value) : value
@@ -60,13 +75,35 @@ interface OrderDetailModalProps {
   usersMap: Map<string, UserData>
   open: boolean
   onOpenChange: (open: boolean) => void
+  onStatusUpdate?: (orderId: string, status: string) => Promise<void>
+  onOrderUpdate?: (updatedOrder: Order) => void
 }
 
-export function OrderDetailModal({ order, usersMap, open, onOpenChange }: OrderDetailModalProps) {
+export function OrderDetailModal({ order, usersMap, open, onOpenChange, onStatusUpdate, onOrderUpdate }: OrderDetailModalProps) {
   const [supplementNames, setSupplementNames] = useState<Map<string, string>>(new Map())
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
 
   // Get user data from usersMap using order.userId
   const user = order?.userId ? usersMap.get(order.userId) : undefined
+
+  const canChangeStatus = order?.status === "CONFIRMED"
+
+  const handleStatusChange = async (newStatus: string) => {
+    if (!order || !onStatusUpdate) return
+    
+    setIsUpdatingStatus(true)
+    try {
+      await onStatusUpdate(order.id, newStatus)
+      // Actualizar el order localmente para reflejar el cambio inmediatamente
+      if (onOrderUpdate) {
+        onOrderUpdate({ ...order, status: newStatus })
+      }
+    } catch (error) {
+      console.error("Error updating status:", error)
+    } finally {
+      setIsUpdatingStatus(false)
+    }
+  }
 
   useEffect(() => {
     if (!order) return
@@ -98,13 +135,10 @@ export function OrderDetailModal({ order, usersMap, open, onOpenChange }: OrderD
                 <DialogTitle className="text-lg font-semibold text-foreground flex items-center gap-2.5">
                   <span className="font-mono text-primary">#{order.id.slice(0, 8).toUpperCase()}</span>
                 </DialogTitle>
-                <div className="flex items-center gap-2 mt-1">
-                  <StatusBadge status={order.status} />
-                  <span className="text-xs text-muted-foreground flex items-center gap-1">
-                    <CalendarDays className="size-3" />
-                    {formatDate(order.createdAt)}
-                  </span>
-                </div>
+                <span className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                  <CalendarDays className="size-3" />
+                  {formatDate(order.createdAt)}
+                </span>
               </div>
             </div>
             <button
@@ -118,6 +152,62 @@ export function OrderDetailModal({ order, usersMap, open, onOpenChange }: OrderD
 
         {/* Scrollable body */}
         <div className="overflow-y-auto px-5 py-4 flex flex-col gap-4 max-h-[calc(92vh-130px)]">
+          {/* Status control section for seller */}
+          {onStatusUpdate && (
+            <div className={cn(
+              "rounded-xl p-4 border-l-4",
+              order.status === "CONFIRMED" && "bg-blue-50 border-l-blue-500",
+              order.status === "ON_THE_WAY" && "bg-violet-50 border-l-violet-500",
+              order.status === "DELIVERED" && "bg-emerald-50 border-l-emerald-500"
+            )}>
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <StatusBadge status={order.status} />
+                  <div>
+                    <p className="text-sm font-medium text-foreground">
+                      {order.status === "CONFIRMED" && "Pedido confirmado, listo para enviar"}
+                      {order.status === "ON_THE_WAY" && "Pedido en camino hacia el cliente"}
+                      {order.status === "DELIVERED" && "Pedido entregado exitosamente"}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {order.status === "CONFIRMED" && "El cliente ha confirmado su pedido"}
+                      {order.status === "ON_THE_WAY" && "El repartidor está en camino"}
+                      {order.status === "DELIVERED" && "El cliente recibió su pedido"}
+                    </p>
+                  </div>
+                </div>
+                {order.status === "CONFIRMED" && (
+                  <Button
+                    onClick={() => handleStatusChange("ON_THE_WAY")}
+                    disabled={isUpdatingStatus}
+                    className="gap-2 bg-violet-600 hover:bg-violet-700 text-white"
+                  >
+                    {isUpdatingStatus ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <Truck className="size-4" />
+                    )}
+                    Marcar En camino
+                  </Button>
+                )}
+                {order.status === "ON_THE_WAY" && (
+                  <Button
+                    onClick={() => handleStatusChange("DELIVERED")}
+                    disabled={isUpdatingStatus}
+                    className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
+                  >
+                    {isUpdatingStatus ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <CheckCircle className="size-4" />
+                    )}
+                    Marcar Entregado
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Customer info - Editorial */}
           <div className="flex flex-col gap-2.5">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">

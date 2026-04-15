@@ -22,7 +22,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 
-type OrderStatus = "ALL" | "PENDING" | "CONFIRMED" | "PREPARING" | "ON_THE_WAY" | "DELIVERED" | "CANCELLED"
+type OrderStatus = "ALL" | "PENDING" | "CONFIRMED" | "ON_THE_WAY" | "DELIVERED" | "CANCELLED"
 
 interface StatusTabConfig {
   value: OrderStatus
@@ -36,7 +36,6 @@ const STATUS_TABS: StatusTabConfig[] = [
   { value: "ALL", label: "Todas", icon: <Receipt className="size-3.5" />, color: "text-slate-600", bgColor: "bg-slate-100" },
   { value: "PENDING", label: "Pendientes", icon: <Clock className="size-3.5" />, color: "text-amber-600", bgColor: "bg-amber-100" },
   { value: "CONFIRMED", label: "Confirmadas", icon: <CheckCircle2 className="size-3.5" />, color: "text-blue-600", bgColor: "bg-blue-100" },
-  { value: "PREPARING", label: "Preparando", icon: <Package className="size-3.5" />, color: "text-indigo-600", bgColor: "bg-indigo-100" },
   { value: "ON_THE_WAY", label: "En camino", icon: <Truck className="size-3.5" />, color: "text-violet-600", bgColor: "bg-violet-100" },
   { value: "DELIVERED", label: "Entregadas", icon: <TrendingUp className="size-3.5" />, color: "text-emerald-600", bgColor: "bg-emerald-100" },
   { value: "CANCELLED", label: "Canceladas", icon: <XCircle className="size-3.5" />, color: "text-red-600", bgColor: "bg-red-100" },
@@ -65,7 +64,7 @@ interface SellerOrdersListProps {
 }
 
 export function SellerOrdersList({ className }: SellerOrdersListProps) {
-  const { orders, usersMap, isLoading, error, refetch } = useSellerOrders()
+  const { orders, usersMap, isLoading, error, refetch, updateOrderStatus } = useSellerOrders()
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [statusFilter, setStatusFilter] = useState<OrderStatus>("ALL")
@@ -82,6 +81,11 @@ export function SellerOrdersList({ className }: SellerOrdersListProps) {
     setModalOpen(false)
     // Delay clearing the order to allow animation to complete
     setTimeout(() => setSelectedOrder(null), 300)
+  }
+
+  // Update selected order when status changes
+  const handleOrderUpdate = (updatedOrder: Order) => {
+    setSelectedOrder(updatedOrder)
   }
 
   // Filtrar pedidos
@@ -115,7 +119,6 @@ export function SellerOrdersList({ className }: SellerOrdersListProps) {
       ALL: orders.length,
       PENDING: orders.filter((o) => o.status === "PENDING").length,
       CONFIRMED: orders.filter((o) => o.status === "CONFIRMED").length,
-      PREPARING: orders.filter((o) => o.status === "PREPARING").length,
       ON_THE_WAY: orders.filter((o) => o.status === "ON_THE_WAY").length,
       DELIVERED: orders.filter((o) => o.status === "DELIVERED").length,
       CANCELLED: orders.filter((o) => o.status === "CANCELLED").length,
@@ -419,6 +422,8 @@ export function SellerOrdersList({ className }: SellerOrdersListProps) {
         usersMap={usersMap}
         open={modalOpen}
         onOpenChange={handleCloseModal}
+        onStatusUpdate={updateOrderStatus}
+        onOrderUpdate={handleOrderUpdate}
       />
     </div>
   )

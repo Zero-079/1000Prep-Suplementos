@@ -57,7 +57,10 @@ interface UseOrdersReturn {
   isLoading: boolean
   error: string | null
   refetch: () => Promise<void>
+  updateOrderStatus: (orderId: string, status: string) => Promise<void>
 }
+
+export type AllowedOrderStatus = "DELIVERED" | "ON_THE_WAY"
 
 export function useOrders(): UseOrdersReturn {
   const [orders, setOrders] = useState<Order[]>([])
@@ -77,9 +80,22 @@ export function useOrders(): UseOrdersReturn {
     }
   }, [])
 
+  const updateOrderStatus = useCallback(async (orderId: string, status: string) => {
+    try {
+      await axiosInstance.patch("/orders/status", { orderId, status })
+      setOrders((prev) =>
+        prev.map((order) =>
+          order.id === orderId ? { ...order, status } : order
+        )
+      )
+    } catch (err) {
+      throw err instanceof Error ? err : new Error("Error al actualizar el estado")
+    }
+  }, [])
+
   useEffect(() => {
     fetchOrders()
   }, [fetchOrders])
 
-  return { orders, isLoading, error, refetch: fetchOrders }
+  return { orders, isLoading, error, refetch: fetchOrders, updateOrderStatus }
 }

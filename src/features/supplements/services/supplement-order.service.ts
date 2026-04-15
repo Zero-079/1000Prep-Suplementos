@@ -24,10 +24,21 @@ export interface SupplementOrderResponse {
   createdAt: string
 }
 
+export type AllowedOrderStatus = "DELIVERED" | "ON_THE_WAY"
+
+export interface UpdateOrderStatusPayload {
+  orderId: string
+  status: AllowedOrderStatus
+}
+
 class SupplementOrderService {
   async createOrder(payload: CreateSupplementOrderPayload): Promise<SupplementOrderResponse> {
     const response = await axiosInstance.post<SupplementOrderResponse>('/orders/supplement', payload)
     return response.data
+  }
+
+  async updateOrderStatus(payload: UpdateOrderStatusPayload): Promise<void> {
+    await axiosInstance.patch('/orders/status', payload)
   }
 }
 

@@ -1,5 +1,5 @@
 import { Order } from "../hooks/useOrders"
-import { CheckCircle2, Clock, XCircle, AlertCircle, Package, Truck } from "lucide-react"
+import { CheckCircle2, Clock, XCircle, AlertCircle, Truck } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 type StatusConfig = {
@@ -27,14 +27,6 @@ function getStatusConfig(status: string): StatusConfig {
         className: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
         bgColor: "#DBEAFE",
         textColor: "#3B82F6",
-      }
-    case "PREPARING":
-      return {
-        label: "Preparando",
-        icon: <Package className="size-3.5" />,
-        className: "bg-blue-200 text-blue-800 dark:bg-blue-800/40 dark:text-blue-300",
-        bgColor: "#BFDBFE",
-        textColor: "#60A5FA",
       }
     case "ON_THE_WAY":
       return {
