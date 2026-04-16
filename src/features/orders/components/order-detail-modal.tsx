@@ -156,23 +156,32 @@ export function OrderDetailModal({ order, usersMap, open, onOpenChange, onStatus
           {onStatusUpdate && (
             <div className={cn(
               "rounded-xl p-4 border-l-4",
+              order.status === "PENDING" && "bg-amber-50 border-l-amber-500",
               order.status === "CONFIRMED" && "bg-blue-50 border-l-blue-500",
               order.status === "ON_THE_WAY" && "bg-violet-50 border-l-violet-500",
-              order.status === "DELIVERED" && "bg-emerald-50 border-l-emerald-500"
+              order.status === "DELIVERED" && "bg-emerald-50 border-l-emerald-500",
+              order.status === "CANCELLED" && "bg-red-50 border-l-red-500",
+              order.status === "EXPIRED" && "bg-gray-50 border-l-gray-400"
             )}>
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <StatusBadge status={order.status} />
                   <div>
                     <p className="text-sm font-medium text-foreground">
+                      {order.status === "PENDING" && "Esperando confirmación"}
                       {order.status === "CONFIRMED" && "Pedido confirmado, listo para enviar"}
                       {order.status === "ON_THE_WAY" && "Pedido en camino hacia el cliente"}
                       {order.status === "DELIVERED" && "Pedido entregado exitosamente"}
+                      {order.status === "CANCELLED" && "Pedido cancelado"}
+                      {order.status === "EXPIRED" && "Pedido expirado"}
                     </p>
                     <p className="text-xs text-muted-foreground mt-0.5">
+                      {order.status === "PENDING" && "El cliente aún no ha confirmado el pago"}
                       {order.status === "CONFIRMED" && "El cliente ha confirmado su pedido"}
                       {order.status === "ON_THE_WAY" && "El repartidor está en camino"}
                       {order.status === "DELIVERED" && "El cliente recibió su pedido"}
+                      {order.status === "CANCELLED" && "El pedido fue cancelado"}
+                      {order.status === "EXPIRED" && "El tiempo para confirmar expiró"}
                     </p>
                   </div>
                 </div>

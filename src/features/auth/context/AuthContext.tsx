@@ -39,7 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // KEY dinámico que fuerza remount cuando cambia hasSession
   // Esto hace que SWR reevalúe las opciones con los nuevos valores
-  const swrKey = useMemo(() => ['/auth/me', hasSession] as const, [hasSession])
+const swrKey = useMemo(() => ['/auth/me', hasSession] as const, [hasSession])
 
   const { data, isLoading: swrLoading, mutate } = useSWR<{ user: User }>(
     swrKey,

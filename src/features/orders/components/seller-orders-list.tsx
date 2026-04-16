@@ -213,7 +213,7 @@ export function SellerOrdersList({ className }: SellerOrdersListProps) {
       </div>
 
       {/* States with Editorial Botanist styling */}
-      {isLoading && (
+      {isLoading && orders.length === 0 && (
         <div className="flex flex-col items-center justify-center py-24 gap-6">
           <div className="relative">
             <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20">
@@ -222,7 +222,7 @@ export function SellerOrdersList({ className }: SellerOrdersListProps) {
           </div>
           <div className="text-center">
             <p className="font-serif text-xl text-foreground mb-1">Cargando órdenes</p>
-            <p className="text-muted-foreground text-sm">Obteniendo los datos de tus pedidos...</p>
+            <p className="text-muted-foreground text-sm">Obteniendo los datos de las órdenes...</p>
           </div>
         </div>
       )}

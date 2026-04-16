@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import axiosInstance from "@/lib/axios"
 
 export interface OrderAddress {
@@ -74,6 +74,9 @@ export function useSellerOrders(): UseSellerOrdersReturn {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  // Cache de usuarios persistente entre renderizados y polling
+  const usersCacheRef = useRef<Map<string, User>>(new Map())
+
   const fetchOrders = useCallback(async () => {
     setIsLoading(true)
     setError(null)
@@ -85,27 +88,35 @@ export function useSellerOrders(): UseSellerOrdersReturn {
       setOrders(fetchedOrders)
 
       // Obtiene usuarios únicos de las órdenes
-      const userIds = [...new Set(fetchedOrders.map((o) => o.userId).filter(Boolean))]
+      const userIds = [...new Set(fetchedOrders.map((o) => o.userId).filter(Boolean))] as string[]
+      
       if (userIds.length > 0) {
-        // Usar Promise.all con map para mantener el orden correcto
-        const usersResponses = await Promise.all(
-          userIds.map(async (userId) => {
-            try {
-              const userResponse = await axiosInstance.get<User>(`/users/${userId}`)
-              return { userId, user: userResponse.data }
-            } catch {
-              return { userId, user: null }
+        // Filtrar solo usuarios que no están en cache
+        const usersToFetch = userIds.filter(userId => !usersCacheRef.current.has(userId))
+        
+        // Fetch usuarios nuevos en paralelo
+        if (usersToFetch.length > 0) {
+          const usersResponses = await Promise.all(
+            usersToFetch.map(async (userId) => {
+              try {
+                const userResponse = await axiosInstance.get<User>(`/users/${userId}`)
+                return { userId, user: userResponse.data }
+              } catch {
+                return { userId, user: null }
+              }
+            })
+          )
+          
+          // Agregar usuarios nuevos al cache
+          usersResponses.forEach(({ userId, user }) => {
+            if (user) {
+              usersCacheRef.current.set(userId, user)
             }
           })
-        )
-        // Create usersMap correctamente
-        const newUsersMap = new Map<string, User>()
-        usersResponses.forEach(({ userId, user }) => {
-          if (user) {
-            newUsersMap.set(userId, user)
-          }
-        })
-        setUsersMap(newUsersMap)
+        }
+        
+        // Combinar cache existente + nuevos usuarios
+        setUsersMap(new Map(usersCacheRef.current))
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al cargar las órdenes")
@@ -123,7 +134,7 @@ export function useSellerOrders(): UseSellerOrdersReturn {
         )
       )
     } catch (err) {
-      throw err instanceof Error ? err : new Error("Error al actualizar el estado")
+      setError(err instanceof Error ? err.message : "Error al actualizar el estado")
     }
   }, [])
 
